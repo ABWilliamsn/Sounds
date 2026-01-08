@@ -94,7 +94,7 @@ class AmbientSoundSynthesizerMediaPlayer(MediaPlayerEntity):
 
     async def async_select_sound_mode(self, sound_mode: str) -> None:
         """Select sound mode."""
-        if sound_mode in self.sound_mode_list:
+        if self.sound_mode_list and sound_mode in self.sound_mode_list:
             self._sound_type = sound_mode
             self.async_write_ha_state()
             _LOGGER.info("Sound mode set to %s", sound_mode)
