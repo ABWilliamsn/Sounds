@@ -9,7 +9,7 @@ from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.helpers import config_validation as cv
 import voluptuous as vol
 
-from .const import DOMAIN
+from .const import DOMAIN, MYNOISE_GENERATORS, SOUND_TYPES
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -18,24 +18,10 @@ PLATFORMS: list[Platform] = []
 SERVICE_PLAY_SOUND = "play_sound"
 SERVICE_STOP_SOUND = "stop_sound"
 
-# myNoise.net sound generator IDs
-MYNOISE_GENERATORS = {
-    "rain": "rain",
-    "ocean": "ocean",
-    "forest": "forest",
-    "wind": "wind",
-    "white_noise": "white",
-    "brown_noise": "brown",
-    "fire": "fire",
-    "thunder": "thunder",
-    "river": "stream",
-    "cafe": "cafe",
-}
-
 PLAY_SOUND_SCHEMA = vol.Schema(
     {
         vol.Required("entity_id"): cv.entity_ids,
-        vol.Required("sound_type"): vol.In(list(MYNOISE_GENERATORS.keys())),
+        vol.Required("sound_type"): vol.In(SOUND_TYPES),
         vol.Optional("volume", default=0.5): vol.All(
             vol.Coerce(float), vol.Range(min=0.0, max=1.0)
         ),
@@ -57,11 +43,21 @@ def generate_mynoise_url(sound_type: str, intensity: int) -> str:
     Generate a myNoise.net streaming URL with slider controls.
     
     myNoise.net URL format:
-    https://mynoise.net/NoiseMachines/[generator]AudioPlayer.php?l=[sliders]&a=1
+    https://mynoise.net/NoiseMachines/[generator]NoiseGenerator.php?l=[sliders]&a=1
     
     where [sliders] are 10 values from 0-100 separated by commas
     We'll use the intensity parameter to control all sliders uniformly.
+    
+    Args:
+        sound_type: The sound type (e.g., "rain", "ocean")
+        intensity: Intensity level (0-100) for all sliders
+    
+    Returns:
+        myNoise.net streaming URL
     """
+    # Validate intensity range
+    intensity = max(0, min(100, intensity))
+    
     generator = MYNOISE_GENERATORS.get(sound_type, "white")
     
     # Create slider values based on intensity

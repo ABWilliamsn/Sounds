@@ -1,6 +1,6 @@
 # Ambient Sound Synthesizer
 
-A Home Assistant custom integration that streams high-quality ambient sounds from myNoise.net to your media players with full intensity control.
+A Home Assistant custom integration that streams high-quality ambient sounds from myNoise.net to your media players with full intensity control and Media Browser support.
 
 ## Installation
 
@@ -20,12 +20,26 @@ This integration leverages myNoise.net's professional sound generators to stream
 - **Animation mode**: Natural variation in the sounds for more realistic experience
 - **No file downloads**: Streams directly from myNoise.net
 - **Multiple sound types**: 10 different ambient sound generators
+- **Media Browser integration**: Browse and play sounds directly from Home Assistant's Media Browser UI
 
 ## Usage
 
-This integration provides services to play ambient sounds on any media player in your Home Assistant setup.
+### Media Browser (Recommended)
+
+The easiest way to use this integration:
+
+1. Open any media player in Home Assistant
+2. Click the "Browse Media" button
+3. Navigate to "Ambient Sound Synthesizer"
+4. Browse through the 10 sound categories
+5. Select a sound and choose an intensity level (25%, 50%, 75%, or 100%)
+6. Click to play on the current media player
+
+This provides a simple UI-based way to control ambient sounds without writing any code!
 
 ### Services
+
+You can also use services for automation and scripts.
 
 #### `ambient_sound_synthesizer.play_sound`
 

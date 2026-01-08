@@ -10,7 +10,7 @@ from homeassistant import config_entries
 from homeassistant.core import callback
 from homeassistant.data_entry_flow import FlowResult
 
-from .const import DOMAIN
+from .const import DOMAIN, SOUND_TYPES
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -83,7 +83,7 @@ class OptionsFlow(config_entries.OptionsFlow):
                     vol.Optional(
                         "sound_type",
                         default=self.config_entry.options.get("sound_type", "rain"),
-                    ): vol.In(["rain", "ocean", "forest", "wind", "white_noise", "brown_noise", "fire", "thunder", "river", "cafe"]),
+                    ): vol.In(SOUND_TYPES),
                     vol.Optional(
                         "intensity",
                         default=self.config_entry.options.get("intensity", 50),
