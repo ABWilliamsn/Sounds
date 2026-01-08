@@ -44,8 +44,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Ambient Sound Synthesizer from a config entry."""
     hass.data.setdefault(DOMAIN, {})
     
-    # Check if this is the first entry - only register services once
-    if not hass.data[DOMAIN]:
+    hass.data[DOMAIN][entry.entry_id] = {
+        "active_players": {},
+    }
+    
+    # Check if services are already registered - only register once per domain
+    if not hass.services.has_service(DOMAIN, SERVICE_PLAY_SOUND):
         # Register services once for the domain
         async def handle_play_sound(call: ServiceCall) -> None:
             """Handle the play_sound service call."""
@@ -62,12 +66,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 intensity,
             )
 
-            # Generate audio URL based on sound type
-            # NOTE: These are placeholder URLs. In production, these should point to:
-            # 1. Local audio files in the www folder
-            # 2. A local HTTP server streaming generated audio
-            # 3. External audio streaming services
-            # Example: "/local/ambient_sounds/rain.mp3" for local files
+            # Generate audio URL based on sound type and intensity
+            # Audio files should be placed in config/www/ambient_sounds/
+            # and will be accessible via /local/ambient_sounds/
             audio_urls = {
                 "rain": f"/local/ambient_sounds/rain_{intensity}.mp3",
                 "ocean": f"/local/ambient_sounds/ocean_{intensity}.mp3",
@@ -103,7 +104,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                         },
                         blocking=True,
                     )
-                except Exception as err:
+                except (Exception) as err:
                     _LOGGER.error("Failed to play sound on %s: %s", entity_id, err)
 
             _LOGGER.info("Successfully started playing %s", sound_type)
@@ -125,7 +126,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                         },
                         blocking=True,
                     )
-                except Exception as err:
+                except (Exception) as err:
                     _LOGGER.error("Failed to stop sound on %s: %s", entity_id, err)
 
             _LOGGER.info("Successfully stopped sound")
@@ -145,10 +146,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             schema=STOP_SOUND_SCHEMA,
         )
 
-    hass.data[DOMAIN][entry.entry_id] = {
-        "active_players": {},
-    }
-
     _LOGGER.info("Setting up Ambient Sound Synthesizer integration")
 
     return True
@@ -159,7 +156,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.data[DOMAIN].pop(entry.entry_id)
     
     # Only unregister services if this is the last entry
-    if not hass.data[DOMAIN]:
+    if len(hass.data[DOMAIN]) == 0:
         hass.services.async_remove(DOMAIN, SERVICE_PLAY_SOUND)
         hass.services.async_remove(DOMAIN, SERVICE_STOP_SOUND)
 
