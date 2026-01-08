@@ -1,12 +1,28 @@
 """Sound generation module for ambient sounds."""
 import numpy as np
-from scipy import signal
 from scipy.io import wavfile
 import logging
 
 _LOGGER = logging.getLogger(__name__)
 
 SAMPLE_RATE = 44100  # Standard CD quality
+
+# Voss-McCartney pink noise algorithm coefficients
+PINK_NOISE_COEFFS = [
+    (0.99886, 0.0555179),
+    (0.99332, 0.0750759),
+    (0.96900, 0.1538520),
+    (0.86650, 0.3104856),
+    (0.55000, 0.5329522),
+    (-0.7616, -0.0168980),
+]
+PINK_NOISE_WHITE_COEFF = 0.5362
+PINK_NOISE_FINAL_STATE_COEFF = 0.115926
+PINK_NOISE_SCALE = 0.11
+
+# Brown noise parameters
+BROWN_NOISE_STEP = 0.02
+BROWN_NOISE_DAMPING = 0.98
 
 
 class AmbientSoundGenerator:
@@ -53,20 +69,18 @@ class AmbientSoundGenerator:
         
         for i in range(samples):
             white = np.random.uniform(-1, 1)
-            state[0] = 0.99886 * state[0] + white * 0.0555179
-            state[1] = 0.99332 * state[1] + white * 0.0750759
-            state[2] = 0.96900 * state[2] + white * 0.1538520
-            state[3] = 0.86650 * state[3] + white * 0.3104856
-            state[4] = 0.55000 * state[4] + white * 0.5329522
-            state[5] = -0.7616 * state[5] - white * 0.0168980
+            # Apply pink noise filter coefficients
+            for j, (decay, scale) in enumerate(PINK_NOISE_COEFFS):
+                state[j] = decay * state[j] + white * scale
+            
             pink[i] = (
                 state[0] + state[1] + state[2] + state[3] + 
-                state[4] + state[5] + state[6] + white * 0.5362
+                state[4] + state[5] + state[6] + white * PINK_NOISE_WHITE_COEFF
             )
-            state[6] = white * 0.115926
+            state[6] = white * PINK_NOISE_FINAL_STATE_COEFF
         
         # Scale down pink noise
-        pink *= 0.11
+        pink *= PINK_NOISE_SCALE
         
         # Apply intensity scaling
         intensity_scale = {"low": 0.3, "medium": 0.6, "high": 0.9}
@@ -92,9 +106,9 @@ class AmbientSoundGenerator:
         
         for i in range(samples):
             white = np.random.uniform(-1, 1)
-            value += white * 0.02
+            value += white * BROWN_NOISE_STEP
             # Clamp and apply damping to prevent drift
-            value = np.clip(value, -1.0, 1.0) * 0.98
+            value = np.clip(value, -1.0, 1.0) * BROWN_NOISE_DAMPING
             brown[i] = value
         
         # Apply intensity scaling
