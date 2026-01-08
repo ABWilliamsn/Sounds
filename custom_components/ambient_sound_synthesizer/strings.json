@@ -1,0 +1,32 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Set up Ambient Sound Synthesizer",
+        "description": "Configure your Ambient Sound Synthesizer integration",
+        "data": {
+          "name": "Name"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Failed to connect",
+      "invalid_auth": "Invalid authentication",
+      "unknown": "Unexpected error"
+    },
+    "abort": {
+      "already_configured": "Device is already configured"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Ambient Sound Synthesizer Options",
+        "description": "Configure options for Ambient Sound Synthesizer",
+        "data": {
+          "volume": "Volume (0-100)"
+        }
+      }
+    }
+  }
+}
