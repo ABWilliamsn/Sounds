@@ -1,6 +1,6 @@
 play_sound:
   name: Play Ambient Sound
-  description: Play an ambient sound from myNoise.net on one or more media players
+  description: Play an ambient sound on one or more media players
   fields:
     entity_id:
       name: Media Player
@@ -12,7 +12,7 @@ play_sound:
           domain: media_player
     sound_type:
       name: Sound Type
-      description: Type of ambient sound to play from myNoise.net
+      description: Type of ambient sound to play
       required: true
       example: "rain"
       selector:
@@ -41,7 +41,7 @@ play_sound:
           step: 0.1
     intensity:
       name: Intensity
-      description: Sound intensity level (0 to 100) - controls myNoise.net slider levels
+      description: Sound intensity level (0 to 100) - for future use
       required: false
       default: 50
       example: 75

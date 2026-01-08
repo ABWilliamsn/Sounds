@@ -9,7 +9,7 @@ from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.helpers import config_validation as cv
 import voluptuous as vol
 
-from .const import DOMAIN, SOUND_TYPES, generate_mynoise_url
+from .const import DOMAIN, SOUND_TYPES, get_sound_url
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -57,17 +57,17 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             intensity = call.data.get("intensity", 50)
 
             _LOGGER.info(
-                "Playing %s sound from myNoise.net to %s (volume: %s, intensity: %s)",
+                "Playing %s sound to %s (volume: %s, intensity: %s)",
                 sound_type,
                 entity_ids,
                 volume,
                 intensity,
             )
 
-            # Generate myNoise.net streaming URL with slider controls
-            media_content_id = generate_mynoise_url(sound_type, intensity)
+            # Get direct audio streaming URL
+            media_content_id = get_sound_url(sound_type, intensity)
             
-            _LOGGER.debug("Generated myNoise.net URL: %s", media_content_id)
+            _LOGGER.debug("Using audio URL: %s", media_content_id)
 
             # Call media_player.play_media service for each target player
             for entity_id in entity_ids:
@@ -96,7 +96,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 except (Exception) as err:
                     _LOGGER.error("Failed to play sound on %s: %s", entity_id, err)
 
-            _LOGGER.info("Successfully started playing %s from myNoise.net", sound_type)
+            _LOGGER.info("Successfully started playing %s", sound_type)
 
         async def handle_stop_sound(call: ServiceCall) -> None:
             """Handle the stop_sound service call."""
@@ -135,7 +135,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             schema=STOP_SOUND_SCHEMA,
         )
 
-    _LOGGER.info("Setting up Ambient Sound Synthesizer integration with myNoise.net")
+    _LOGGER.info("Setting up Ambient Sound Synthesizer integration")
 
     return True
 
