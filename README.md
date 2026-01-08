@@ -216,4 +216,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 If you encounter any issues or have questions:
 1. Check the [Issues](https://github.com/ABWilliamsn/Ambient-Sound-Synthesizer/issues) page
 2. Create a new issue with detailed information about your problem
-3. Include relevant log entries from Home Assistant 
+3. Include relevant log entries from Home Assistant
+
+## Acknowledgments
+
+This project was inspired by the [Noise Generator](https://github.com/nirnachmani/noise-generator) integration by nirnachmani, which provides continuous streaming of synthesized audio. This implementation focuses on generating and saving audio files locally for use in automations.

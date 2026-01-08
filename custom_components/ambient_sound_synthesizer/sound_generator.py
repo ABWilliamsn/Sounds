@@ -36,7 +36,7 @@ class AmbientSoundGenerator:
         return self._normalize_audio(noise)
 
     def generate_pink_noise(self, duration, intensity):
-        """Generate pink noise (1/f noise).
+        """Generate pink noise (1/f noise) using Voss-McCartney algorithm.
         
         Args:
             duration: Duration in seconds
@@ -46,13 +46,27 @@ class AmbientSoundGenerator:
             numpy array of audio samples
         """
         samples = int(duration * self.sample_rate)
-        white = np.random.randn(samples)
         
-        # Apply pink noise filter (approximate 1/f spectrum)
-        # Using a simple IIR filter approach
-        b = np.array([0.049922035, -0.095993537, 0.050612699, -0.004408786])
-        a = np.array([1, -2.494956002, 2.017265875, -0.522189400])
-        pink = signal.lfilter(b, a, white)
+        # Voss-McCartney algorithm for more accurate pink noise
+        pink = np.zeros(samples)
+        state = np.zeros(7)
+        
+        for i in range(samples):
+            white = np.random.uniform(-1, 1)
+            state[0] = 0.99886 * state[0] + white * 0.0555179
+            state[1] = 0.99332 * state[1] + white * 0.0750759
+            state[2] = 0.96900 * state[2] + white * 0.1538520
+            state[3] = 0.86650 * state[3] + white * 0.3104856
+            state[4] = 0.55000 * state[4] + white * 0.5329522
+            state[5] = -0.7616 * state[5] - white * 0.0168980
+            pink[i] = (
+                state[0] + state[1] + state[2] + state[3] + 
+                state[4] + state[5] + state[6] + white * 0.5362
+            )
+            state[6] = white * 0.115926
+        
+        # Scale down pink noise
+        pink *= 0.11
         
         # Apply intensity scaling
         intensity_scale = {"low": 0.3, "medium": 0.6, "high": 0.9}
@@ -71,10 +85,17 @@ class AmbientSoundGenerator:
             numpy array of audio samples
         """
         samples = int(duration * self.sample_rate)
-        white = np.random.randn(samples)
         
-        # Brown noise is the cumulative sum of white noise
-        brown = np.cumsum(white)
+        # Generate brown noise with cumulative sum and damping
+        brown = np.zeros(samples)
+        value = 0.0
+        
+        for i in range(samples):
+            white = np.random.uniform(-1, 1)
+            value += white * 0.02
+            # Clamp and apply damping to prevent drift
+            value = np.clip(value, -1.0, 1.0) * 0.98
+            brown[i] = value
         
         # Apply intensity scaling
         intensity_scale = {"low": 0.3, "medium": 0.6, "high": 0.9}
