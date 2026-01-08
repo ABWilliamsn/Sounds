@@ -9,7 +9,7 @@ from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.helpers import config_validation as cv
 import voluptuous as vol
 
-from .const import DOMAIN, MYNOISE_GENERATORS, SOUND_TYPES
+from .const import DOMAIN, SOUND_TYPES, generate_mynoise_url
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -36,39 +36,6 @@ STOP_SOUND_SCHEMA = vol.Schema(
         vol.Required("entity_id"): cv.entity_ids,
     }
 )
-
-
-def generate_mynoise_url(sound_type: str, intensity: int) -> str:
-    """
-    Generate a myNoise.net streaming URL with slider controls.
-    
-    myNoise.net URL format:
-    https://mynoise.net/NoiseMachines/[generator]NoiseGenerator.php?l=[sliders]&a=1
-    
-    where [sliders] are 10 values from 0-100 separated by commas
-    We'll use the intensity parameter to control all sliders uniformly.
-    
-    Args:
-        sound_type: The sound type (e.g., "rain", "ocean")
-        intensity: Intensity level (0-100) for all sliders
-    
-    Returns:
-        myNoise.net streaming URL
-    """
-    # Validate intensity range
-    intensity = max(0, min(100, intensity))
-    
-    generator = MYNOISE_GENERATORS.get(sound_type, "white")
-    
-    # Create slider values based on intensity
-    # myNoise uses 10 sliders for different frequency bands
-    # We'll set them all to the intensity value for a balanced sound
-    slider_values = ",".join([str(intensity)] * 10)
-    
-    # a=1 enables animation mode for more natural variation
-    url = f"https://mynoise.net/NoiseMachines/{generator}NoiseGenerator.php?l={slider_values}&a=1"
-    
-    return url
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:

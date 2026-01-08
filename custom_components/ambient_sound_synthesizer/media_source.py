@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import logging
-from typing import Any
 
 from homeassistant.components.media_player import BrowseMedia, MediaClass, MediaType
 from homeassistant.components.media_source import (
@@ -14,86 +13,9 @@ from homeassistant.components.media_source import (
 )
 from homeassistant.core import HomeAssistant
 
-from .const import DOMAIN
+from .const import DOMAIN, SOUND_LIBRARY, generate_mynoise_url
 
 _LOGGER = logging.getLogger(__name__)
-
-# myNoise.net sound generator IDs and display names
-SOUND_LIBRARY = {
-    "rain": {
-        "name": "Rain",
-        "generator": "rain",
-        "description": "Soothing rain sounds",
-    },
-    "ocean": {
-        "name": "Ocean Waves",
-        "generator": "ocean",
-        "description": "Calming ocean waves",
-    },
-    "forest": {
-        "name": "Forest",
-        "generator": "forest",
-        "description": "Peaceful forest ambience",
-    },
-    "wind": {
-        "name": "Wind",
-        "generator": "wind",
-        "description": "Gentle wind sounds",
-    },
-    "white_noise": {
-        "name": "White Noise",
-        "generator": "white",
-        "description": "Classic white noise",
-    },
-    "brown_noise": {
-        "name": "Brown Noise",
-        "generator": "brown",
-        "description": "Deep brown noise",
-    },
-    "fire": {
-        "name": "Fireplace",
-        "generator": "fire",
-        "description": "Crackling fire",
-    },
-    "thunder": {
-        "name": "Thunder",
-        "generator": "thunder",
-        "description": "Distant thunder",
-    },
-    "river": {
-        "name": "River Stream",
-        "generator": "stream",
-        "description": "Flowing river water",
-    },
-    "cafe": {
-        "name": "Cafe Restaurant",
-        "generator": "cafe",
-        "description": "Busy cafe ambience",
-    },
-}
-
-
-def generate_mynoise_url(generator: str, intensity: int = 50) -> str:
-    """
-    Generate a myNoise.net streaming URL with slider controls.
-    
-    Args:
-        generator: The myNoise.net generator name
-        intensity: Intensity level (0-100) for all sliders
-    
-    Returns:
-        Direct streaming URL to myNoise.net audio
-    """
-    # Ensure intensity is within valid range
-    intensity = max(0, min(100, intensity))
-    
-    # Create slider values based on intensity
-    slider_values = ",".join([str(intensity)] * 10)
-    
-    # a=1 enables animation mode for more natural variation
-    url = f"https://mynoise.net/NoiseMachines/{generator}NoiseGenerator.php?l={slider_values}&a=1"
-    
-    return url
 
 
 async def async_get_media_source(hass: HomeAssistant) -> AmbientSoundMediaSource:
@@ -123,7 +45,7 @@ class AmbientSoundMediaSource(MediaSource):
             raise Unresolvable(f"Unknown sound: {sound_id}")
 
         sound = SOUND_LIBRARY[sound_id]
-        url = generate_mynoise_url(sound["generator"], intensity)
+        url = generate_mynoise_url(sound_id, intensity)
 
         _LOGGER.info(
             "Resolving ambient sound: %s (intensity: %s) -> %s",
