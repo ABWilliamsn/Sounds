@@ -83,7 +83,7 @@ class OptionsFlow(config_entries.OptionsFlow):
                     vol.Optional(
                         "sound_type",
                         default=self.config_entry.options.get("sound_type", "rain"),
-                    ): vol.In(["rain", "ocean", "forest", "wind", "white_noise", "brown_noise"]),
+                    ): vol.In(["rain", "ocean", "forest", "wind", "white_noise", "brown_noise", "fire", "thunder", "river", "cafe"]),
                     vol.Optional(
                         "intensity",
                         default=self.config_entry.options.get("intensity", 50),

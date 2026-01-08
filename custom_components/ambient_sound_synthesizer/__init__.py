@@ -18,12 +18,24 @@ PLATFORMS: list[Platform] = []
 SERVICE_PLAY_SOUND = "play_sound"
 SERVICE_STOP_SOUND = "stop_sound"
 
+# myNoise.net sound generator IDs
+MYNOISE_GENERATORS = {
+    "rain": "rain",
+    "ocean": "ocean",
+    "forest": "forest",
+    "wind": "wind",
+    "white_noise": "white",
+    "brown_noise": "brown",
+    "fire": "fire",
+    "thunder": "thunder",
+    "river": "stream",
+    "cafe": "cafe",
+}
+
 PLAY_SOUND_SCHEMA = vol.Schema(
     {
         vol.Required("entity_id"): cv.entity_ids,
-        vol.Required("sound_type"): vol.In(
-            ["rain", "ocean", "forest", "wind", "white_noise", "brown_noise"]
-        ),
+        vol.Required("sound_type"): vol.In(list(MYNOISE_GENERATORS.keys())),
         vol.Optional("volume", default=0.5): vol.All(
             vol.Coerce(float), vol.Range(min=0.0, max=1.0)
         ),
@@ -38,6 +50,29 @@ STOP_SOUND_SCHEMA = vol.Schema(
         vol.Required("entity_id"): cv.entity_ids,
     }
 )
+
+
+def generate_mynoise_url(sound_type: str, intensity: int) -> str:
+    """
+    Generate a myNoise.net streaming URL with slider controls.
+    
+    myNoise.net URL format:
+    https://mynoise.net/NoiseMachines/[generator]AudioPlayer.php?l=[sliders]&a=1
+    
+    where [sliders] are 10 values from 0-100 separated by commas
+    We'll use the intensity parameter to control all sliders uniformly.
+    """
+    generator = MYNOISE_GENERATORS.get(sound_type, "white")
+    
+    # Create slider values based on intensity
+    # myNoise uses 10 sliders for different frequency bands
+    # We'll set them all to the intensity value for a balanced sound
+    slider_values = ",".join([str(intensity)] * 10)
+    
+    # a=1 enables animation mode for more natural variation
+    url = f"https://mynoise.net/NoiseMachines/{generator}NoiseGenerator.php?l={slider_values}&a=1"
+    
+    return url
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
@@ -59,26 +94,17 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             intensity = call.data.get("intensity", 50)
 
             _LOGGER.info(
-                "Playing %s sound to %s (volume: %s, intensity: %s)",
+                "Playing %s sound from myNoise.net to %s (volume: %s, intensity: %s)",
                 sound_type,
                 entity_ids,
                 volume,
                 intensity,
             )
 
-            # Generate audio URL based on sound type and intensity
-            # Audio files should be placed in config/www/ambient_sounds/
-            # and will be accessible via /local/ambient_sounds/
-            audio_urls = {
-                "rain": f"/local/ambient_sounds/rain_{intensity}.mp3",
-                "ocean": f"/local/ambient_sounds/ocean_{intensity}.mp3",
-                "forest": f"/local/ambient_sounds/forest_{intensity}.mp3",
-                "wind": f"/local/ambient_sounds/wind_{intensity}.mp3",
-                "white_noise": f"/local/ambient_sounds/white_noise_{intensity}.mp3",
-                "brown_noise": f"/local/ambient_sounds/brown_noise_{intensity}.mp3",
-            }
-
-            media_content_id = audio_urls.get(sound_type)
+            # Generate myNoise.net streaming URL with slider controls
+            media_content_id = generate_mynoise_url(sound_type, intensity)
+            
+            _LOGGER.debug("Generated myNoise.net URL: %s", media_content_id)
 
             # Call media_player.play_media service for each target player
             for entity_id in entity_ids:
@@ -107,7 +133,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 except (Exception) as err:
                     _LOGGER.error("Failed to play sound on %s: %s", entity_id, err)
 
-            _LOGGER.info("Successfully started playing %s", sound_type)
+            _LOGGER.info("Successfully started playing %s from myNoise.net", sound_type)
 
         async def handle_stop_sound(call: ServiceCall) -> None:
             """Handle the stop_sound service call."""
@@ -146,7 +172,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             schema=STOP_SOUND_SCHEMA,
         )
 
-    _LOGGER.info("Setting up Ambient Sound Synthesizer integration")
+    _LOGGER.info("Setting up Ambient Sound Synthesizer integration with myNoise.net")
 
     return True
 

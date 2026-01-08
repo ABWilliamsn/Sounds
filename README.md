@@ -1,6 +1,6 @@
 # Ambient Sound Synthesizer
 
-A Home Assistant custom integration to generate digital ambient sounds and play them on your media players.
+A Home Assistant custom integration that streams high-quality ambient sounds from myNoise.net to your media players with full intensity control.
 
 ## Installation
 
@@ -9,23 +9,17 @@ A Home Assistant custom integration to generate digital ambient sounds and play 
 3. Go to Settings -> Devices & Services -> Add Integration.
 4. Search for "Ambient Sound Synthesizer" and follow the configuration steps.
 
-## Audio Files Setup
+## Overview
 
-This integration plays ambient sound files on your media players. You need to provide the audio files:
+This integration leverages myNoise.net's professional sound generators to stream ambient sounds directly to your Home Assistant media players. No audio files needed - everything is streamed on-demand from myNoise.net with customizable intensity controls.
 
-1. Create a directory `config/www/ambient_sounds/` in your Home Assistant installation
-2. Add your ambient sound MP3 files to this directory with names like:
-   - `rain_50.mp3`, `rain_75.mp3` (different intensity levels)
-   - `ocean_50.mp3`, `ocean_75.mp3`
-   - `forest_50.mp3`, `wind_50.mp3`
-   - `white_noise_50.mp3`, `brown_noise_50.mp3`
-3. The integration will reference these files as `/local/ambient_sounds/[sound_type]_[intensity].mp3`
+### Features from myNoise.net
 
-**Note:** You can find free ambient sound files from sources like:
-- YouTube Audio Library
-- Freesound.org
-- BBC Sound Effects
-- Your own recordings
+- **High-quality sound generation**: Professional ambient sound generators
+- **Intensity sliders**: Control sound characteristics with the intensity parameter (0-100)
+- **Animation mode**: Natural variation in the sounds for more realistic experience
+- **No file downloads**: Streams directly from myNoise.net
+- **Multiple sound types**: 10 different ambient sound generators
 
 ## Usage
 
@@ -35,13 +29,23 @@ This integration provides services to play ambient sounds on any media player in
 
 #### `ambient_sound_synthesizer.play_sound`
 
-Play an ambient sound on one or more media players.
+Play an ambient sound from myNoise.net on one or more media players.
 
 **Parameters:**
 - `entity_id` (required): Target media player(s)
-- `sound_type` (required): Type of sound - choose from: rain, ocean, forest, wind, white_noise, brown_noise
+- `sound_type` (required): Type of sound - choose from:
+  - `rain` - Rain noise
+  - `ocean` - Ocean waves
+  - `forest` - Forest ambience
+  - `wind` - Wind sounds
+  - `white_noise` - White noise
+  - `brown_noise` - Brown noise
+  - `fire` - Fire crackling
+  - `thunder` - Thunder sounds
+  - `river` - Flowing river/stream
+  - `cafe` - Cafe restaurant ambience
 - `volume` (optional): Volume level from 0.0 to 1.0 (default: 0.5)
-- `intensity` (optional): Sound intensity from 0 to 100 (default: 50) - used to select different audio files
+- `intensity` (optional): Sound intensity from 0 to 100 (default: 50) - controls myNoise.net's slider levels
 
 **Example:**
 ```yaml
@@ -84,20 +88,64 @@ automation:
           sound_type: rain
           volume: 0.3
           intensity: 60
+          
+  - alias: "Play cafe sounds during work hours"
+    trigger:
+      - platform: time
+        at: "09:00:00"
+    condition:
+      - condition: state
+        entity_id: binary_sensor.workday
+        state: "on"
+    action:
+      - service: ambient_sound_synthesizer.play_sound
+        data:
+          entity_id: media_player.office_speaker
+          sound_type: cafe
+          volume: 0.4
+          intensity: 50
 ```
+
+## How It Works
+
+The integration generates myNoise.net streaming URLs with customized slider settings based on your intensity parameter. These URLs point to myNoise.net's sound generators, which:
+
+1. Generate ambient sounds in real-time
+2. Stream them continuously to your media player
+3. Include animation mode for natural sound variation
+4. Adjust intensity based on your settings
+
+### Intensity Parameter
+
+The `intensity` parameter (0-100) controls all 10 frequency band sliders on myNoise.net:
+- **0-30**: Subtle, background ambience
+- **30-70**: Moderate, noticeable presence
+- **70-100**: Strong, prominent sound
 
 ## Configuration
 
-You can configure default settings through the integration's options, but these can be overridden when calling the services.
+You can configure default settings through the integration's options in the UI, but these can be overridden when calling the services.
 
 ## Features
 
-- Play ambient sounds on any media player
-- Six different sound types: rain, ocean, forest, wind, white noise, brown noise
-- Adjustable volume and intensity
+- Stream ambient sounds from myNoise.net on any media player
+- 10 different sound types from professional sound generators
+- Adjustable volume and intensity controls
+- No audio files required - everything streams on-demand
 - Service-based design for maximum flexibility
 - Works with any Home Assistant media player
 - Use in automations and scripts
+- Control multiple media players simultaneously
+
+## Credits
+
+This integration uses sound generators from [myNoise.net](https://mynoise.net/), created by Stéphane Pigeon. myNoise.net provides high-quality ambient sound generators with sophisticated algorithms.
+
+## Requirements
+
+- Active internet connection to stream from myNoise.net
+- Media players that support streaming from HTTP URLs
+- Home Assistant 2024.1.0 or newer
 
 ## Development
 
