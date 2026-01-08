@@ -1,0 +1,61 @@
+play_sound:
+  name: Play Ambient Sound
+  description: Play an ambient sound on one or more media players
+  fields:
+    entity_id:
+      name: Media Player
+      description: Target media player entity or entities
+      required: true
+      example: "media_player.living_room_speaker"
+      selector:
+        entity:
+          domain: media_player
+    sound_type:
+      name: Sound Type
+      description: Type of ambient sound to play
+      required: true
+      example: "rain"
+      selector:
+        select:
+          options:
+            - rain
+            - ocean
+            - forest
+            - wind
+            - white_noise
+            - brown_noise
+    volume:
+      name: Volume
+      description: Volume level (0.0 to 1.0)
+      required: false
+      default: 0.5
+      example: 0.7
+      selector:
+        number:
+          min: 0.0
+          max: 1.0
+          step: 0.1
+    intensity:
+      name: Intensity
+      description: Sound intensity level (0 to 100)
+      required: false
+      default: 50
+      example: 75
+      selector:
+        number:
+          min: 0
+          max: 100
+          step: 1
+
+stop_sound:
+  name: Stop Ambient Sound
+  description: Stop ambient sound playback on one or more media players
+  fields:
+    entity_id:
+      name: Media Player
+      description: Target media player entity or entities
+      required: true
+      example: "media_player.living_room_speaker"
+      selector:
+        entity:
+          domain: media_player

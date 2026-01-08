@@ -1,6 +1,6 @@
 # Ambient Sound Synthesizer
 
-A Home Assistant custom integration to generate digital ambient sounds.
+A Home Assistant custom integration to generate digital ambient sounds and play them on your media players.
 
 ## Installation
 
@@ -9,19 +9,80 @@ A Home Assistant custom integration to generate digital ambient sounds.
 3. Go to Settings -> Devices & Services -> Add Integration.
 4. Search for "Ambient Sound Synthesizer" and follow the configuration steps.
 
+## Usage
+
+This integration provides services to play ambient sounds on any media player in your Home Assistant setup.
+
+### Services
+
+#### `ambient_sound_synthesizer.play_sound`
+
+Play an ambient sound on one or more media players.
+
+**Parameters:**
+- `entity_id` (required): Target media player(s)
+- `sound_type` (required): Type of sound - choose from: rain, ocean, forest, wind, white_noise, brown_noise
+- `volume` (optional): Volume level from 0.0 to 1.0 (default: 0.5)
+- `intensity` (optional): Sound intensity from 0 to 100 (default: 50)
+
+**Example:**
+```yaml
+service: ambient_sound_synthesizer.play_sound
+data:
+  entity_id: media_player.living_room_speaker
+  sound_type: rain
+  volume: 0.7
+  intensity: 75
+```
+
+#### `ambient_sound_synthesizer.stop_sound`
+
+Stop ambient sound playback on one or more media players.
+
+**Parameters:**
+- `entity_id` (required): Target media player(s)
+
+**Example:**
+```yaml
+service: ambient_sound_synthesizer.stop_sound
+data:
+  entity_id: media_player.living_room_speaker
+```
+
+### Using in Automations
+
+You can use these services in automations to play ambient sounds based on triggers:
+
+```yaml
+automation:
+  - alias: "Play rain sounds at bedtime"
+    trigger:
+      - platform: time
+        at: "22:00:00"
+    action:
+      - service: ambient_sound_synthesizer.play_sound
+        data:
+          entity_id: media_player.bedroom_speaker
+          sound_type: rain
+          volume: 0.3
+          intensity: 60
+```
+
 ## Configuration
 
-The integration supports configuration through the UI with a config flow. You can also configure options after setup to adjust volume and other settings.
+You can configure default settings through the integration's options, but these can be overridden when calling the services.
 
 ## Features
 
-- Easy setup through Home Assistant UI
-- Configurable options for volume control
-- Local polling integration
+- Play ambient sounds on any media player
+- Six different sound types: rain, ocean, forest, wind, white noise, brown noise
+- Adjustable volume and intensity
+- Service-based design for maximum flexibility
+- Works with any Home Assistant media player
 
 ## Development
 
-This is a Home Assistant custom integration built using the standard config flow pattern.
+This is a Home Assistant custom integration built using the standard config flow pattern and service architecture.
 
 ## License
 
