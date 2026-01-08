@@ -9,6 +9,24 @@ A Home Assistant custom integration to generate digital ambient sounds and play 
 3. Go to Settings -> Devices & Services -> Add Integration.
 4. Search for "Ambient Sound Synthesizer" and follow the configuration steps.
 
+## Audio Files Setup
+
+This integration plays ambient sound files on your media players. You need to provide the audio files:
+
+1. Create a directory `config/www/ambient_sounds/` in your Home Assistant installation
+2. Add your ambient sound MP3 files to this directory with names like:
+   - `rain_50.mp3`, `rain_75.mp3` (different intensity levels)
+   - `ocean_50.mp3`, `ocean_75.mp3`
+   - `forest_50.mp3`, `wind_50.mp3`
+   - `white_noise_50.mp3`, `brown_noise_50.mp3`
+3. The integration will reference these files as `/local/ambient_sounds/[sound_type]_[intensity].mp3`
+
+**Note:** You can find free ambient sound files from sources like:
+- YouTube Audio Library
+- Freesound.org
+- BBC Sound Effects
+- Your own recordings
+
 ## Usage
 
 This integration provides services to play ambient sounds on any media player in your Home Assistant setup.
@@ -23,7 +41,7 @@ Play an ambient sound on one or more media players.
 - `entity_id` (required): Target media player(s)
 - `sound_type` (required): Type of sound - choose from: rain, ocean, forest, wind, white_noise, brown_noise
 - `volume` (optional): Volume level from 0.0 to 1.0 (default: 0.5)
-- `intensity` (optional): Sound intensity from 0 to 100 (default: 50)
+- `intensity` (optional): Sound intensity from 0 to 100 (default: 50) - used to select different audio files
 
 **Example:**
 ```yaml
@@ -79,6 +97,7 @@ You can configure default settings through the integration's options, but these 
 - Adjustable volume and intensity
 - Service-based design for maximum flexibility
 - Works with any Home Assistant media player
+- Use in automations and scripts
 
 ## Development
 
