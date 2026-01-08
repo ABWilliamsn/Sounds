@@ -3,10 +3,7 @@
     "step": {
       "user": {
         "title": "Ambient Sound Synthesizer",
-        "description": "Set up the Ambient Sound Synthesizer integration.",
-        "data": {
-          "output_directory": "Output Directory"
-        }
+        "description": "Set up the Ambient Sound Synthesizer integration. A default white noise profile will be created. You can manage profiles after setup."
       }
     },
     "abort": {
@@ -15,33 +12,21 @@
   },
   "options": {
     "step": {
-      "init": {
+      "profile_list": {
+        "title": "Manage Sound Profiles",
+        "description": "Current profiles:\n\n{profiles}\n\nSelect an action:",
         "data": {
-          "output_directory": "Output Directory"
+          "action": "Action"
         }
-      }
-    }
-  },
-  "services": {
-    "generate_sound": {
-      "name": "Generate Ambient Sound",
-      "description": "Generate an ambient sound audio file.",
-      "fields": {
-        "sound_type": {
-          "name": "Sound Type",
-          "description": "Type of ambient sound to generate."
-        },
-        "intensity": {
-          "name": "Intensity",
-          "description": "Intensity level of the sound."
-        },
-        "duration": {
-          "name": "Duration",
-          "description": "Duration of the audio file in seconds."
-        },
-        "filename": {
-          "name": "Filename",
-          "description": "Name of the output audio file (without extension)."
+      },
+      "profile_edit": {
+        "title": "Edit Sound Profile",
+        "description": "Configure a sound profile.",
+        "data": {
+          "name": "Profile Name",
+          "subtype": "Sound Type",
+          "volume": "Volume (0.0-1.0)",
+          "seed": "Random Seed (optional)"
         }
       }
     }

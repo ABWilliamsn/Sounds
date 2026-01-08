@@ -1,133 +1,92 @@
 """The Ambient Sound Synthesizer integration."""
-import logging
-import os
-import voluptuous as vol
+
+from __future__ import annotations
+
+from copy import deepcopy
+from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant, ServiceCall
-import homeassistant.helpers.config_validation as cv
+from homeassistant.core import HomeAssistant
 
-from .sound_generator import AmbientSoundGenerator
+from .const import (
+    CONF_PROFILE_NAME,
+    CONF_PROFILES,
+    DEFAULT_PROFILE_NAME,
+    DOMAIN,
+)
+from .noise import coerce_profile
+from .stream import SoundStreamManager, SoundStreamView
 
-_LOGGER = logging.getLogger(__name__)
 
-DOMAIN = "ambient_sound_synthesizer"
+async def async_setup(hass: HomeAssistant, _: dict[str, Any]) -> bool:
+    """Set up the integration via YAML (not supported)."""
+    hass.data.setdefault(DOMAIN, {"entries": {}, "view": None})
+    return True
 
-SERVICE_GENERATE_SOUND = "generate_sound"
 
-ATTR_SOUND_TYPE = "sound_type"
-ATTR_INTENSITY = "intensity"
-ATTR_DURATION = "duration"
-ATTR_FILENAME = "filename"
+def _profiles_from_entry(entry: ConfigEntry) -> list[dict[str, Any]]:
+    """Return the active profiles for a config entry."""
+    raw_profiles: list[dict[str, Any]]
+    if CONF_PROFILES in entry.options:
+        raw_profiles = entry.options[CONF_PROFILES]
+    else:
+        raw_profiles = entry.data.get(CONF_PROFILES, [])
 
-SOUND_TYPES = ["white", "pink", "brown", "rain", "wind", "fan"]
-INTENSITIES = ["low", "medium", "high"]
-
-SERVICE_GENERATE_SOUND_SCHEMA = vol.Schema({
-    vol.Required(ATTR_SOUND_TYPE): vol.In(SOUND_TYPES),
-    vol.Required(ATTR_INTENSITY): vol.In(INTENSITIES),
-    vol.Required(ATTR_DURATION): vol.All(vol.Coerce(int), vol.Range(min=10, max=3600)),
-    vol.Required(ATTR_FILENAME): cv.string,
-})
+    profiles: list[dict[str, Any]] = []
+    for raw_profile in raw_profiles:
+        name = str(raw_profile.get(CONF_PROFILE_NAME, DEFAULT_PROFILE_NAME))
+        cleaned = coerce_profile(raw_profile)
+        cleaned[CONF_PROFILE_NAME] = name
+        profiles.append(cleaned)
+    return deepcopy(profiles)
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Ambient Sound Synthesizer from a config entry."""
-    
-    # Store the configuration
-    hass.data.setdefault(DOMAIN, {})
-    hass.data[DOMAIN][entry.entry_id] = {
-        "output_directory": entry.options.get(
-            "output_directory",
-            entry.data.get("output_directory", "/config/www/ambient_sounds")
-        )
+    domain_data = hass.data.setdefault(DOMAIN, {"entries": {}, "view": None})
+
+    if domain_data.get("view") is None:
+        view = SoundStreamView(hass)
+        hass.http.register_view(view)
+        domain_data["view"] = view
+
+    profiles = _profiles_from_entry(entry)
+    manager = SoundStreamManager(hass, entry.entry_id)
+    manager.update_profiles(profiles)
+    entry.async_on_unload(entry.add_update_listener(_async_update_listener))
+
+    domain_data.setdefault("entries", {})[entry.entry_id] = {
+        "title": entry.title or "Ambient Sound Synthesizer",
+        "manager": manager,
     }
-    
-    # Initialize the sound generator
-    generator = AmbientSoundGenerator()
-    
-    async def handle_generate_sound(call: ServiceCall):
-        """Handle the generate_sound service call."""
-        sound_type = call.data[ATTR_SOUND_TYPE]
-        intensity = call.data[ATTR_INTENSITY]
-        duration = call.data[ATTR_DURATION]
-        filename = call.data[ATTR_FILENAME]
-        
-        # Get the output directory from the first config entry
-        output_dir = None
-        for entry_id, data in hass.data[DOMAIN].items():
-            if isinstance(data, dict) and "output_directory" in data:
-                output_dir = data["output_directory"]
-                break
-        
-        if not output_dir:
-            _LOGGER.error("No output directory configured")
-            return
-        
-        # Ensure the output directory exists
-        try:
-            await hass.async_add_executor_job(os.makedirs, output_dir, 0o755, True)
-        except OSError as e:
-            _LOGGER.error("Could not create output directory: %s", str(e))
-            return
-        
-        # Add .wav extension if not present
-        if not filename.endswith(".wav"):
-            filename = f"{filename}.wav"
-        
-        output_path = os.path.join(output_dir, filename)
-        
-        _LOGGER.info(
-            "Generating %s sound with %s intensity for %d seconds, saving to %s",
-            sound_type, intensity, duration, output_path
-        )
-        
-        # Generate the sound in an executor (blocking operation)
-        success = await hass.async_add_executor_job(
-            generator.generate_and_save,
-            sound_type,
-            intensity,
-            duration,
-            output_path
-        )
-        
-        if success:
-            _LOGGER.info("Successfully generated ambient sound: %s", output_path)
-        else:
-            _LOGGER.error("Failed to generate ambient sound")
-    
-    # Register the service
-    hass.services.async_register(
-        DOMAIN,
-        SERVICE_GENERATE_SOUND,
-        handle_generate_sound,
-        schema=SERVICE_GENERATE_SOUND_SCHEMA,
-    )
-    
-    # Register update listener for options
-    entry.async_on_unload(entry.add_update_listener(update_listener))
-    
+
     return True
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Unload a config entry."""
-    # Remove the service if this is the last config entry
-    if len(hass.data[DOMAIN]) == 1:
-        hass.services.async_remove(DOMAIN, SERVICE_GENERATE_SOUND)
-    
-    # Remove the config entry data
-    hass.data[DOMAIN].pop(entry.entry_id)
-    
+    """Unload an Ambient Sound Synthesizer config entry."""
+    domain_data = hass.data.get(DOMAIN)
+    if not domain_data:
+        return True
+
+    entries = domain_data.get("entries", {})
+    stored = entries.pop(entry.entry_id, None)
+    if stored:
+        manager: SoundStreamManager = stored["manager"]
+        await manager.async_shutdown()
     return True
 
 
-async def update_listener(hass: HomeAssistant, entry: ConfigEntry):
-    """Handle options update."""
-    # Update the stored configuration
-    hass.data[DOMAIN][entry.entry_id] = {
-        "output_directory": entry.options.get(
-            "output_directory",
-            entry.data.get("output_directory", "/config/www/ambient_sounds")
-        )
-    }
+async def _async_update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    """Handle config entry options updates."""
+    domain_data = hass.data.get(DOMAIN, {})
+    entries = domain_data.get("entries", {})
+    stored = entries.get(entry.entry_id)
+    if not stored:
+        return
+
+    manager: SoundStreamManager = stored["manager"]
+    profiles = _profiles_from_entry(entry)
+    manager.update_profiles(profiles)
+
+    # Media source instances read directly from hass.data; nothing else needed.
