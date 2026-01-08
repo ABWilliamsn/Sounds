@@ -1,0 +1,34 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Ambient Sound Synthesizer",
+        "description": "Set up the Ambient Sound Synthesizer integration. A default white noise profile will be created. You can manage profiles after setup."
+      }
+    },
+    "abort": {
+      "already_configured": "This integration is already configured."
+    }
+  },
+  "options": {
+    "step": {
+      "profile_list": {
+        "title": "Manage Sound Profiles",
+        "description": "Current profiles:\n\n{profiles}\n\nSelect an action:",
+        "data": {
+          "action": "Action"
+        }
+      },
+      "profile_edit": {
+        "title": "Edit Sound Profile",
+        "description": "Configure a sound profile.",
+        "data": {
+          "name": "Profile Name",
+          "subtype": "Sound Type",
+          "volume": "Volume (0.0-1.0)",
+          "seed": "Random Seed (optional)"
+        }
+      }
+    }
+  }
+}
