@@ -24,6 +24,8 @@
         "title": "Ambient Sound Synthesizer Options",
         "description": "Configure options for Ambient Sound Synthesizer",
         "data": {
+          "sound_type": "Sound Type",
+          "intensity": "Intensity (0-100)",
           "volume": "Volume (0-100)"
         }
       }
