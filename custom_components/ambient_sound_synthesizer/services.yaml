@@ -1,0 +1,46 @@
+generate_sound:
+  name: Generate Ambient Sound
+  description: Generate an ambient sound audio file with specified parameters.
+  fields:
+    sound_type:
+      name: Sound Type
+      description: Type of ambient sound to generate.
+      required: true
+      example: "rain"
+      selector:
+        select:
+          options:
+            - "white"
+            - "pink"
+            - "brown"
+            - "rain"
+            - "wind"
+            - "fan"
+    intensity:
+      name: Intensity
+      description: Intensity level of the sound.
+      required: true
+      example: "medium"
+      selector:
+        select:
+          options:
+            - "low"
+            - "medium"
+            - "high"
+    duration:
+      name: Duration
+      description: Duration of the audio file in seconds.
+      required: true
+      example: 300
+      selector:
+        number:
+          min: 10
+          max: 3600
+          unit_of_measurement: "seconds"
+    filename:
+      name: Filename
+      description: Name of the output audio file (without extension, .wav will be added).
+      required: true
+      example: "ambient_rain"
+      selector:
+        text:

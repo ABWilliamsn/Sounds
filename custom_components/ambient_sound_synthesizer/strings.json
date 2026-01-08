@@ -1,0 +1,49 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Ambient Sound Synthesizer",
+        "description": "Set up the Ambient Sound Synthesizer integration.",
+        "data": {
+          "output_directory": "Output Directory"
+        }
+      }
+    },
+    "abort": {
+      "already_configured": "This integration is already configured."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "data": {
+          "output_directory": "Output Directory"
+        }
+      }
+    }
+  },
+  "services": {
+    "generate_sound": {
+      "name": "Generate Ambient Sound",
+      "description": "Generate an ambient sound audio file.",
+      "fields": {
+        "sound_type": {
+          "name": "Sound Type",
+          "description": "Type of ambient sound to generate."
+        },
+        "intensity": {
+          "name": "Intensity",
+          "description": "Intensity level of the sound."
+        },
+        "duration": {
+          "name": "Duration",
+          "description": "Duration of the audio file in seconds."
+        },
+        "filename": {
+          "name": "Filename",
+          "description": "Name of the output audio file (without extension)."
+        }
+      }
+    }
+  }
+}

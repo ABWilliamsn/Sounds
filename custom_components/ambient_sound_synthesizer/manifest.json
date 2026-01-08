@@ -1,0 +1,11 @@
+{
+  "domain": "ambient_sound_synthesizer",
+  "name": "Ambient Sound Synthesizer",
+  "codeowners": ["@ABWilliamsn"],
+  "config_flow": true,
+  "documentation": "https://github.com/ABWilliamsn/Ambient-Sound-Synthesizer",
+  "issue_tracker": "https://github.com/ABWilliamsn/Ambient-Sound-Synthesizer/issues",
+  "requirements": ["numpy>=1.24.0", "scipy>=1.10.0"],
+  "version": "1.0.0",
+  "iot_class": "local_polling"
+}
