@@ -18,6 +18,7 @@ from .const import (
     DEFAULT_RESULTS_PER_SEARCH,
     DOMAIN,
     MAX_RESULTS_PER_SEARCH,
+    MIN_RESULTS_PER_SEARCH,
 )
 from .pixabay_client import PixabayClient
 
@@ -28,7 +29,7 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
         vol.Required(CONF_API_KEY): str,
         vol.Optional(
             CONF_RESULTS_PER_SEARCH, default=DEFAULT_RESULTS_PER_SEARCH
-        ): vol.All(vol.Coerce(int), vol.Range(min=1, max=MAX_RESULTS_PER_SEARCH)),
+        ): vol.All(vol.Coerce(int), vol.Range(min=MIN_RESULTS_PER_SEARCH, max=MAX_RESULTS_PER_SEARCH)),
     }
 )
 
@@ -106,7 +107,7 @@ class OptionsFlow(config_entries.OptionsFlow):
                             CONF_RESULTS_PER_SEARCH, DEFAULT_RESULTS_PER_SEARCH
                         ),
                     ): vol.All(
-                        vol.Coerce(int), vol.Range(min=1, max=MAX_RESULTS_PER_SEARCH)
+                        vol.Coerce(int), vol.Range(min=MIN_RESULTS_PER_SEARCH, max=MAX_RESULTS_PER_SEARCH)
                     ),
                 }
             ),

@@ -6,7 +6,7 @@
         "description": "Enter your Pixabay API key to search and play ambient sounds. Get your free API key at https://pixabay.com/api/docs/",
         "data": {
           "api_key": "Pixabay API Key",
-          "results_per_search": "Results per search (1-100)"
+          "results_per_search": "Results per search (3-200)"
         }
       }
     },
@@ -25,7 +25,7 @@
         "title": "Ambient Sounds Options",
         "description": "Configure search options",
         "data": {
-          "results_per_search": "Results per search (1-100)"
+          "results_per_search": "Results per search (3-200)"
         }
       }
     }

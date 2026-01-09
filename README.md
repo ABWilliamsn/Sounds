@@ -149,7 +149,7 @@ automation:
 
 After initial setup, you can modify settings through **Options**:
 
-- **Results per search**: Number of results to show per search (1-100, default: 20)
+- **Results per search**: Number of results to show per search (3-200, default: 20)
 
 ## Troubleshooting
 

@@ -37,11 +37,13 @@ class PixabayClient:
         
         Args:
             query: Search query
-            per_page: Number of results per page (max 100)
+            per_page: Number of results per page (min 3, max 200)
             
         Returns:
             List of audio results
         """
+        # Pixabay requires per_page to be between 3 and 200
+        per_page = max(3, min(200, per_page))
         # Use standard Pixabay API - note that audio may not be available in free tier
         url = f"{PIXABAY_API_BASE}?key={self.api_key}&q={query}&per_page={per_page}"
         
@@ -79,8 +81,8 @@ class PixabayClient:
             True if API key is valid, False otherwise
         """
         try:
-            # Test with a simple search
-            url = f"{PIXABAY_API_BASE}?key={self.api_key}&q=test&per_page=1"
+            # Test with a simple search (per_page must be 3 or more for Pixabay)
+            url = f"{PIXABAY_API_BASE}?key={self.api_key}&q=test&per_page=3"
             async with async_timeout.timeout(TIMEOUT):
                 async with self.session.get(url) as response:
                     if response.status == 200:
