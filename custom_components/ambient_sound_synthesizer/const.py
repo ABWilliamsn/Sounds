@@ -15,6 +15,7 @@ STORAGE_KEY = f"{DOMAIN}_favorites"
 STORAGE_VERSION = 1
 
 # Pixabay API endpoints
+# Note: Pixabay's API primarily supports images and videos
+# The free tier may have limited or no audio support
 PIXABAY_API_BASE = "https://pixabay.com/api/"
-PIXABAY_AUDIO_ENDPOINT = f"{PIXABAY_API_BASE}?key={{api_key}}&q={{query}}&audio_type=all&per_page={{per_page}}"
 

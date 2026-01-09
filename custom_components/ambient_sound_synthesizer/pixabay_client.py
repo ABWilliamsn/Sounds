@@ -33,6 +33,8 @@ class PixabayClient:
     ) -> list[dict[str, Any]]:
         """Search for audio on Pixabay.
         
+        Note: This uses the standard Pixabay API. Audio results may be limited.
+        
         Args:
             query: Search query
             per_page: Number of results per page (max 100)
@@ -40,7 +42,8 @@ class PixabayClient:
         Returns:
             List of audio results
         """
-        url = f"{PIXABAY_API_BASE}?key={self.api_key}&q={query}&audio_type=all&per_page={per_page}"
+        # Use standard Pixabay API - note that audio may not be available in free tier
+        url = f"{PIXABAY_API_BASE}?key={self.api_key}&q={query}&per_page={per_page}"
         
         try:
             async with async_timeout.timeout(TIMEOUT):
@@ -48,6 +51,13 @@ class PixabayClient:
                     if response.status == 200:
                         data = await response.json()
                         return data.get("hits", [])
+                    elif response.status == 400:
+                        error_text = await response.text()
+                        _LOGGER.error(
+                            "Pixabay API bad request (400): %s. Please verify your API key is correct.",
+                            error_text,
+                        )
+                        return []
                     else:
                         _LOGGER.error(
                             "Pixabay API error: %s - %s",
@@ -73,6 +83,19 @@ class PixabayClient:
             url = f"{PIXABAY_API_BASE}?key={self.api_key}&q=test&per_page=1"
             async with async_timeout.timeout(TIMEOUT):
                 async with self.session.get(url) as response:
-                    return response.status == 200
-        except (asyncio.TimeoutError, aiohttp.ClientError):
+                    if response.status == 200:
+                        return True
+                    else:
+                        error_text = await response.text()
+                        _LOGGER.error(
+                            "API key verification failed with status %s: %s",
+                            response.status,
+                            error_text,
+                        )
+                        return False
+        except asyncio.TimeoutError:
+            _LOGGER.error("Timeout during API key verification")
+            return False
+        except aiohttp.ClientError as err:
+            _LOGGER.error("Error during API key verification: %s", err)
             return False

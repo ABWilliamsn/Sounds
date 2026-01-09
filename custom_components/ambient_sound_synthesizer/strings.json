@@ -11,7 +11,7 @@
       }
     },
     "error": {
-      "invalid_api_key": "Invalid API key. Please check your Pixabay API key and try again.",
+      "invalid_api_key": "Invalid API key or connection failed. Please verify:\n1. Your API key is correct (get it at https://pixabay.com/api/docs/)\n2. You have an active internet connection\n3. The API key has been activated (may take a few minutes after registration)",
       "cannot_connect": "Failed to connect to Pixabay",
       "unknown": "Unexpected error"
     },
