@@ -36,7 +36,7 @@ class AmbientSoundsMediaSource(MediaSource):
 
     async def async_resolve_media(self, item: MediaSourceItem) -> PlayMedia:
         """Resolve media to a playable URL."""
-        # identifier format: "fav:{favorite_id}" or "search:{search_id}"
+        # identifier format: "fav:{favorite_id}" or "preview:{sound_id}:{query}:{url}"
         if not item.identifier:
             raise Unresolvable("No identifier provided")
         
@@ -44,38 +44,31 @@ class AmbientSoundsMediaSource(MediaSource):
         if len(parts) != 2:
             raise Unresolvable(f"Invalid identifier: {item.identifier}")
         
-        media_type, media_id = parts
+        media_type, media_data = parts
         
         if media_type == "fav":
             # Playing a favorite
-            favorite = await self._get_favorite(media_id)
+            favorite = await self._get_favorite(media_data)
             if not favorite:
-                raise Unresolvable(f"Favorite not found: {media_id}")
+                raise Unresolvable(f"Favorite not found: {media_data}")
             
             _LOGGER.info("Resolving favorite: %s", favorite["name"])
             return PlayMedia(favorite["url"], "audio/mpeg")
         
         elif media_type == "preview":
-            # Preview a search result
-            # Get any available client to search
-            for entry_id, entry_data in self.hass.data.get(DOMAIN, {}).items():
-                client = entry_data.get("client")
-                if client:
-                    try:
-                        # Search for the sound by ID
-                        results = await client.search_audio("", 200)  # Get recent sounds
-                        for result in results:
-                            if str(result["id"]) == media_id:
-                                # Try to get audio URL
-                                audio_url = result.get("previewURL") or result.get("pageURL")
-                                if audio_url:
-                                    _LOGGER.info("Resolving preview for sound ID: %s", media_id)
-                                    return PlayMedia(audio_url, "audio/mpeg")
-                        break
-                    except Exception as err:
-                        _LOGGER.error("Error getting preview: %s", err)
+            # Preview a search result - format: preview:{sound_id}:{query}:{url}
+            preview_parts = media_data.split(":", 2)
+            if len(preview_parts) < 3:
+                raise Unresolvable(f"Invalid preview identifier: {media_data}")
             
-            raise Unresolvable(f"Could not find preview for sound: {media_id}")
+            sound_id, query, audio_url = preview_parts
+            audio_url = unquote(audio_url)
+            
+            if not audio_url:
+                raise Unresolvable(f"No audio URL provided for sound: {sound_id}")
+            
+            _LOGGER.info("Resolving preview for sound ID: %s", sound_id)
+            return PlayMedia(audio_url, "audio/mpeg")
         
         else:
             raise Unresolvable(f"Unknown media type: {media_type}")
@@ -369,7 +362,7 @@ class AmbientSoundsMediaSource(MediaSource):
             children.append(
                 BrowseMediaSource(
                     domain=DOMAIN,
-                    identifier=f"preview:{sound_id}",
+                    identifier=f"preview:{sound_id}:{quote(query)}:{quote(audio_url)}",
                     media_class=MediaClass.MUSIC,
                     media_content_type=MediaType.MUSIC,
                     title="▶️ Preview (if supported by player)",
