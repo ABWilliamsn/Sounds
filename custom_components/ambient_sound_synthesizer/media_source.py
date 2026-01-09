@@ -83,6 +83,14 @@ class AmbientSoundsMediaSource(MediaSource):
             # Root level - show Favorites and Search
             return await self._browse_root()
         
+        # Handle special info identifiers that don't have colons (non-browsable items)
+        if item.identifier.startswith("custom_search_info") or \
+           item.identifier.startswith("info:") or \
+           item.identifier in ["empty", "no_results"]:
+            # These are informational items that shouldn't be browsable
+            # Return to the custom search view
+            return await self._browse_custom_search()
+        
         # Parse identifier
         parts = item.identifier.split(":", 1)
         if len(parts) != 2:
