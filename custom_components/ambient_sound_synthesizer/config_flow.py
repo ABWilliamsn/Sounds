@@ -1,28 +1,40 @@
-"""Config flow for Ambient Sound Synthesizer integration."""
+"""Config flow for Ambient Sounds integration."""
 from __future__ import annotations
 
 import logging
 from typing import Any
 
+import aiohttp
 import voluptuous as vol
 
 from homeassistant import config_entries
 from homeassistant.core import callback
 from homeassistant.data_entry_flow import FlowResult
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
-from .const import DOMAIN, SOUND_TYPES
+from .const import (
+    CONF_API_KEY,
+    CONF_RESULTS_PER_SEARCH,
+    DEFAULT_RESULTS_PER_SEARCH,
+    DOMAIN,
+    MAX_RESULTS_PER_SEARCH,
+)
+from .pixabay_client import PixabayClient
 
 _LOGGER = logging.getLogger(__name__)
 
 STEP_USER_DATA_SCHEMA = vol.Schema(
     {
-        vol.Required("name", default="Ambient Sound Synthesizer"): str,
+        vol.Required(CONF_API_KEY): str,
+        vol.Optional(
+            CONF_RESULTS_PER_SEARCH, default=DEFAULT_RESULTS_PER_SEARCH
+        ): vol.All(vol.Coerce(int), vol.Range(min=1, max=MAX_RESULTS_PER_SEARCH)),
     }
 )
 
 
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
-    """Handle a config flow for Ambient Sound Synthesizer."""
+    """Handle a config flow for Ambient Sounds."""
 
     VERSION = 1
 
@@ -33,13 +45,21 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         errors: dict[str, str] = {}
 
         if user_input is not None:
-            await self.async_set_unique_id(user_input["name"])
-            self._abort_if_unique_id_configured()
+            # Verify the API key
+            session = async_get_clientsession(self.hass)
+            client = PixabayClient(user_input[CONF_API_KEY], session)
+            
+            if await client.verify_api_key():
+                # API key is valid
+                await self.async_set_unique_id(user_input[CONF_API_KEY])
+                self._abort_if_unique_id_configured()
 
-            return self.async_create_entry(
-                title=user_input["name"],
-                data=user_input,
-            )
+                return self.async_create_entry(
+                    title="Ambient Sounds",
+                    data=user_input,
+                )
+            else:
+                errors["base"] = "invalid_api_key"
 
         return self.async_show_form(
             step_id="user",
@@ -57,7 +77,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
 
 class OptionsFlow(config_entries.OptionsFlow):
-    """Handle options flow for Ambient Sound Synthesizer."""
+    """Handle options flow for Ambient Sounds."""
 
     def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
         """Initialize options flow."""
@@ -81,17 +101,13 @@ class OptionsFlow(config_entries.OptionsFlow):
             data_schema=vol.Schema(
                 {
                     vol.Optional(
-                        "sound_type",
-                        default=self.config_entry.options.get("sound_type", "rain"),
-                    ): vol.In(SOUND_TYPES),
-                    vol.Optional(
-                        "intensity",
-                        default=self.config_entry.options.get("intensity", 50),
-                    ): vol.All(vol.Coerce(int), vol.Range(min=0, max=100)),
-                    vol.Optional(
-                        "volume",
-                        default=self.config_entry.options.get("volume", 50),
-                    ): vol.All(vol.Coerce(int), vol.Range(min=0, max=100)),
+                        CONF_RESULTS_PER_SEARCH,
+                        default=self.config_entry.options.get(
+                            CONF_RESULTS_PER_SEARCH, DEFAULT_RESULTS_PER_SEARCH
+                        ),
+                    ): vol.All(
+                        vol.Coerce(int), vol.Range(min=1, max=MAX_RESULTS_PER_SEARCH)
+                    ),
                 }
             ),
         )

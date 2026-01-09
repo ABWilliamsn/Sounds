@@ -2,31 +2,30 @@
   "config": {
     "step": {
       "user": {
-        "title": "Set up Ambient Sound Synthesizer",
-        "description": "Configure your Ambient Sound Synthesizer integration",
+        "title": "Set up Ambient Sounds",
+        "description": "Enter your Pixabay API key to search and play ambient sounds. Get your free API key at https://pixabay.com/api/docs/",
         "data": {
-          "name": "Name"
+          "api_key": "Pixabay API Key",
+          "results_per_search": "Results per search (1-100)"
         }
       }
     },
     "error": {
-      "cannot_connect": "Failed to connect",
-      "invalid_auth": "Invalid authentication",
+      "invalid_api_key": "Invalid API key. Please check your Pixabay API key and try again.",
+      "cannot_connect": "Failed to connect to Pixabay",
       "unknown": "Unexpected error"
     },
     "abort": {
-      "already_configured": "Device is already configured"
+      "already_configured": "This API key is already configured"
     }
   },
   "options": {
     "step": {
       "init": {
-        "title": "Ambient Sound Synthesizer Options",
-        "description": "Configure options for Ambient Sound Synthesizer",
+        "title": "Ambient Sounds Options",
+        "description": "Configure search options",
         "data": {
-          "sound_type": "Sound Type",
-          "intensity": "Intensity (0-100)",
-          "volume": "Volume (0-100)"
+          "results_per_search": "Results per search (1-100)"
         }
       }
     }

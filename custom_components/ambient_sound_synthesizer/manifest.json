@@ -1,11 +1,11 @@
 {
-  "domain": "ambient_sound_synthesizer",
-  "name": "Ambient Sound Synthesizer",
+  "domain": "ambient_sounds",
+  "name": "Ambient Sounds",
   "codeowners": ["@ABWilliamsn"],
   "config_flow": true,
   "documentation": "https://github.com/ABWilliamsn/Ambient-Sound-Synthesizer",
   "issue_tracker": "https://github.com/ABWilliamsn/Ambient-Sound-Synthesizer/issues",
-  "iot_class": "local_polling",
-  "requirements": [],
-  "version": "1.0.0"
+  "iot_class": "cloud_polling",
+  "requirements": ["aiohttp>=3.8.0"],
+  "version": "2.0.0"
 }
