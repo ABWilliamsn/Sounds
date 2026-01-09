@@ -19,7 +19,7 @@ from .const import (
     STORAGE_KEY,
     STORAGE_VERSION,
 )
-from .pixabay_client import PixabayClient
+from .freesound_client import FreesoundClient
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -74,9 +74,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         entry.data.get(CONF_RESULTS_PER_SEARCH, DEFAULT_RESULTS_PER_SEARCH),
     )
     
-    # Create Pixabay client
+    # Create Freesound client
     session = async_get_clientsession(hass)
-    client = PixabayClient(api_key, session)
+    client = FreesoundClient(api_key, session)
     
     # Create favorites storage
     store = Store(hass, STORAGE_VERSION, STORAGE_KEY)

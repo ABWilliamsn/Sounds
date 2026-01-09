@@ -25,7 +25,7 @@ async def async_get_media_source(hass: HomeAssistant) -> AmbientSoundsMediaSourc
 
 
 class AmbientSoundsMediaSource(MediaSource):
-    """Provide ambient sounds from Pixabay as media sources."""
+    """Provide ambient sounds from Freesound as media sources."""
 
     name: str = "Ambient Sounds"
 
@@ -124,7 +124,7 @@ class AmbientSoundsMediaSource(MediaSource):
                 identifier="search:",
                 media_class=MediaClass.DIRECTORY,
                 media_content_type="",
-                title="🔍 Search Pixabay",
+                title="🔍 Search Freesound",
                 can_play=False,
                 can_expand=True,
                 thumbnail=None,
@@ -175,7 +175,7 @@ class AmbientSoundsMediaSource(MediaSource):
                     identifier="empty",
                     media_class=MediaClass.DIRECTORY,
                     media_content_type="",
-                    title="No favorites yet. Search Pixabay to add some!",
+                    title="No favorites yet. Search Freesound to add some!",
                     can_play=False,
                     can_expand=False,
                     thumbnail=None,
@@ -223,14 +223,14 @@ class AmbientSoundsMediaSource(MediaSource):
                 identifier="search:",
                 media_class=MediaClass.DIRECTORY,
                 media_content_type="",
-                title="🔍 Search Pixabay - Select a category",
+                title="🔍 Search Freesound - Select a category",
                 can_play=False,
                 can_expand=True,
                 children=children,
             )
         
         # Perform actual search
-        results = await self._search_pixabay(query)
+        results = await self._search_freesound(query)
         
         children = []
         for result in results:
@@ -240,8 +240,8 @@ class AmbientSoundsMediaSource(MediaSource):
             seconds = duration % 60
             duration_str = f" ({minutes}:{seconds:02d})" if duration else ""
             
-            # Create a descriptive title
-            title = result.get("tags", "Ambient Sound").replace(",", " •")
+            # Use name or tags for title
+            title = result.get("name", result.get("tags", "Ambient Sound"))
             if len(title) > 50:
                 title = title[:47] + "..."
             
@@ -252,9 +252,9 @@ class AmbientSoundsMediaSource(MediaSource):
                     media_class=MediaClass.MUSIC,
                     media_content_type=MediaType.MUSIC,
                     title=f"{title}{duration_str}",
-                    can_play=False,  # Can't play directly, must favorite first
-                    can_expand=True,  # Show options to favorite
-                    thumbnail=result.get("picture_id"),
+                    can_play=False,  # Can't play directly, show details first
+                    can_expand=True,  # Show details and preview
+                    thumbnail=None,
                 )
             )
         
@@ -286,7 +286,7 @@ class AmbientSoundsMediaSource(MediaSource):
     async def _browse_search_result(self, sound_id: str, query: str) -> BrowseMediaSource:
         """Browse a specific search result to show options."""
         # Get the search results again to find this specific sound
-        results = await self._search_pixabay(query)
+        results = await self._search_freesound(query)
         
         # Find the specific sound
         sound = None
@@ -304,14 +304,12 @@ class AmbientSoundsMediaSource(MediaSource):
         seconds = duration % 60
         duration_str = f"{minutes}:{seconds:02d}" if duration else "Unknown"
         
+        name = sound.get("name", "Unknown")
         tags = sound.get("tags", "No tags")
+        username = sound.get("username", "Unknown")
         
-        # Get the audio URL
-        audio_url = None
-        for key in ["previewURL", "pageURL"]:
-            if key in sound:
-                audio_url = sound[key]
-                break
+        # Get the preview audio URL
+        audio_url = sound.get("preview_url", "")
         
         # Since we can't actually add favorites from Media Browser UI,
         # we'll show instructions
@@ -320,7 +318,7 @@ class AmbientSoundsMediaSource(MediaSource):
             f"Service: ambient_sounds.add_favorite\n"
             f"Data:\n"
             f"  sound_id: \"{sound_id}\"\n"
-            f"  name: \"{tags[:30]}\"\n"
+            f"  name: \"{name}\"\n"
             f"  url: \"{audio_url}\"\n"
             f"  duration: {duration}\n"
             f"  tags: \"{tags}\""
@@ -332,7 +330,17 @@ class AmbientSoundsMediaSource(MediaSource):
                 identifier=f"info:{sound_id}",
                 media_class=MediaClass.DIRECTORY,
                 media_content_type="",
-                title=f"📋 Tags: {tags[:50]}",
+                title=f"📋 {name}",
+                can_play=False,
+                can_expand=False,
+                thumbnail=None,
+            ),
+            BrowseMediaSource(
+                domain=DOMAIN,
+                identifier=f"info:{sound_id}:tags",
+                media_class=MediaClass.DIRECTORY,
+                media_content_type="",
+                title=f"🏷️ Tags: {tags[:50]}",
                 can_play=False,
                 can_expand=False,
                 thumbnail=None,
@@ -343,6 +351,16 @@ class AmbientSoundsMediaSource(MediaSource):
                 media_class=MediaClass.DIRECTORY,
                 media_content_type="",
                 title=f"⏱️ Duration: {duration_str}",
+                can_play=False,
+                can_expand=False,
+                thumbnail=None,
+            ),
+            BrowseMediaSource(
+                domain=DOMAIN,
+                identifier=f"info:{sound_id}:username",
+                media_class=MediaClass.DIRECTORY,
+                media_content_type="",
+                title=f"👤 By: {username}",
                 can_play=False,
                 can_expand=False,
                 thumbnail=None,
@@ -366,7 +384,7 @@ class AmbientSoundsMediaSource(MediaSource):
                     identifier=f"preview:{sound_id}:{quote(query)}:{quote(audio_url)}",
                     media_class=MediaClass.MUSIC,
                     media_content_type=MediaType.MUSIC,
-                    title="▶️ Preview (if supported by player)",
+                    title="▶️ Preview",
                     can_play=True,
                     can_expand=False,
                     thumbnail=None,
@@ -378,7 +396,7 @@ class AmbientSoundsMediaSource(MediaSource):
             identifier=f"search_result:{sound_id}:{quote(query)}",
             media_class=MediaClass.DIRECTORY,
             media_content_type="",
-            title=f"🎵 {tags[:40]}",
+            title=f"🎵 {name[:40]}",
             can_play=False,
             can_expand=True,
             children=children,
@@ -397,8 +415,8 @@ class AmbientSoundsMediaSource(MediaSource):
             all_favorites.update(favorites)
         return all_favorites
 
-    async def _search_pixabay(self, query: str) -> list:
-        """Search Pixabay for audio."""
+    async def _search_freesound(self, query: str) -> list:
+        """Search Freesound for audio."""
         # Get the first available client
         for entry_id, entry_data in self.hass.data.get(DOMAIN, {}).items():
             client = entry_data.get("client")
@@ -408,8 +426,8 @@ class AmbientSoundsMediaSource(MediaSource):
                     results = await client.search_audio(query, results_per_search)
                     return results
                 except Exception as err:
-                    _LOGGER.error("Error searching Pixabay: %s", err)
+                    _LOGGER.error("Error searching Freesound: %s", err)
                     return []
         
-        _LOGGER.warning("No Pixabay client available")
+        _LOGGER.warning("No Freesound client available")
         return []

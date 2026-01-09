@@ -20,7 +20,7 @@ from .const import (
     MAX_RESULTS_PER_SEARCH,
     MIN_RESULTS_PER_SEARCH,
 )
-from .pixabay_client import PixabayClient
+from .freesound_client import FreesoundClient
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -48,7 +48,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             # Verify the API key
             session = async_get_clientsession(self.hass)
-            client = PixabayClient(user_input[CONF_API_KEY], session)
+            client = FreesoundClient(user_input[CONF_API_KEY], session)
             
             if await client.verify_api_key():
                 # API key is valid

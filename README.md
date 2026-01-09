@@ -1,21 +1,21 @@
 # Ambient Sounds
 
-A Home Assistant custom integration that lets you search, discover, and play ambient sounds from Pixabay's extensive audio library directly on your media players.
+A Home Assistant custom integration that lets you search, discover, and play ambient sounds from Freesound's extensive audio library directly on your media players.
 
 ## Features
 
-🔍 **Search Pixabay's Audio Library**: Browse thousands of high-quality ambient sounds  
+🔍 **Search Freesound's Audio Library**: Browse thousands of high-quality ambient sounds  
 ⭐ **Favorites Management**: Save your favorite sounds for quick access  
 🎵 **Media Browser Integration**: Easy browsing and playback through Home Assistant's UI  
 🤖 **Automation Support**: Full service integration for automations and scripts  
-☁️ **Cloud Streaming**: No local storage needed - streams directly from Pixabay  
-🆓 **Free API**: 5,000 requests per month on Pixabay's free tier  
+☁️ **Cloud Streaming**: No local storage needed - streams directly from Freesound  
+🆓 **Free API**: 5,000 requests per month on Freesound's free tier  
 
 ## Prerequisites
 
-You'll need a free Pixabay API key:
+You'll need a free Freesound API key:
 
-1. Go to https://pixabay.com/api/docs/
+1. Go to https://freesound.org/apiv2/apply//
 2. Create a free account if you don't have one
 3. Copy your API key from the API documentation page
 
@@ -25,7 +25,7 @@ You'll need a free Pixabay API key:
 2. Restart Home Assistant
 3. Go to **Settings** → **Devices & Services** → **Add Integration**
 4. Search for "**Ambient Sounds**"
-5. Enter your Pixabay API key when prompted
+5. Enter your Freesound API key when prompted
 6. (Optional) Configure the number of results per search (default: 20)
 
 ## Usage
@@ -39,11 +39,11 @@ The primary way to use Ambient Sounds:
 3. Navigate to **Ambient Sounds**
 4. Choose from:
    - **⭐ Favorites**: Your saved sounds for quick access
-   - **🔍 Search Pixabay**: Browse and search Pixabay's audio catalog
+   - **🔍 Search Freesound**: Browse and search Freesound's audio catalog
 
 #### Searching for Sounds
 
-1. Click **🔍 Search Pixabay**
+1. Click **🔍 Search Freesound**
 2. Select a suggested category (rain, ocean, forest, etc.) or search for custom terms
 3. Browse the results - each shows duration and descriptive tags
 4. To play a sound:
@@ -62,7 +62,7 @@ Play a saved favorite sound on your media player.
 service: ambient_sounds.play_favorite
 data:
   entity_id: media_player.living_room_speaker
-  favorite_id: "12345"  # The Pixabay sound ID
+  favorite_id: "12345"  # The Freesound sound ID
   volume: 0.7  # Optional: 0.0 to 1.0
 ```
 
@@ -73,7 +73,7 @@ Save a sound from your search results to favorites. Get the details from search 
 ```yaml
 service: ambient_sounds.add_favorite
 data:
-  sound_id: "12345"  # Pixabay sound ID
+  sound_id: "12345"  # Freesound sound ID
   name: "Relaxing Rain"  # Your custom name
   url: "https://cdn.pixabay.com/audio/..."  # Direct audio URL
   tags: "rain, nature, ambient"  # Optional: descriptive tags
@@ -140,8 +140,8 @@ automation:
 
 ## How It Works
 
-1. **Search**: The integration uses Pixabay's API to search their audio library
-2. **Stream**: Audio files are streamed directly from Pixabay's servers
+1. **Search**: The integration uses Freesound's API to search their audio library
+2. **Stream**: Audio files are streamed directly from Freesound's servers
 3. **Favorites**: Your saved favorites are stored locally in Home Assistant using the Store helper
 4. **Playback**: Sounds play on any compatible media player in your network
 
@@ -154,7 +154,7 @@ After initial setup, you can modify settings through **Options**:
 ## Troubleshooting
 
 **"Invalid API key" error during setup:**
-- Double-check your API key from https://pixabay.com/api/docs/
+- Double-check your API key from https://freesound.org/apiv2/apply//
 - Ensure you copied the entire key without extra spaces
 
 **No search results:**
@@ -165,18 +165,18 @@ After initial setup, you can modify settings through **Options**:
 **Sounds won't play:**
 - Ensure your media player supports HTTP audio streaming
 - Check that the media player is powered on and connected
-- Verify the audio URL is still valid (Pixabay URLs are permanent)
+- Verify the audio URL is still valid (Freesound URLs are permanent)
 
 ## API Limits
 
-Pixabay's free tier provides:
+Freesound's free tier provides:
 - 5,000 API requests per month
 - Each search counts as one request
 - No limits on playing saved favorites
 
 ## Credits
 
-This integration uses audio from [Pixabay](https://pixabay.com/), which provides high-quality royalty-free audio content. All audio is subject to Pixabay's license terms.
+This integration uses audio from [Freesound](https://pixabay.com/), which provides high-quality royalty-free audio content. All audio is subject to Freesound's license terms.
 
 ## Support
 
@@ -278,7 +278,7 @@ You can configure default settings through the integration's options in the UI, 
 
 ## Audio Sources
 
-This integration uses high-quality ambient sound audio from Pixabay's royalty-free sound library. All audio files are properly licensed for use.
+This integration uses high-quality ambient sound audio from Freesound's royalty-free sound library. All audio files are properly licensed for use.
 
 ## Requirements
 
