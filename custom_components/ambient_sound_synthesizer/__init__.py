@@ -29,6 +29,7 @@ SERVICE_PLAY_FAVORITE = "play_favorite"
 SERVICE_STOP_SOUND = "stop_sound"
 SERVICE_ADD_FAVORITE = "add_favorite"
 SERVICE_REMOVE_FAVORITE = "remove_favorite"
+SERVICE_SEARCH = "search"
 
 PLAY_FAVORITE_SCHEMA = vol.Schema(
     {
@@ -59,6 +60,13 @@ ADD_FAVORITE_SCHEMA = vol.Schema(
 REMOVE_FAVORITE_SCHEMA = vol.Schema(
     {
         vol.Required("favorite_id"): str,
+    }
+)
+
+SEARCH_SCHEMA = vol.Schema(
+    {
+        vol.Required("query"): str,
+        vol.Optional("sort_by"): vol.In(["name", "duration"]),
     }
 )
 
@@ -200,6 +208,47 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             
             _LOGGER.info("Removed favorite: %s", favorite_id)
         
+        async def handle_search(call: ServiceCall) -> None:
+            """Handle the search service call."""
+            query = call.data["query"]
+            sort_by = call.data.get("sort_by")
+            
+            # Get the first available client (any entry will do for search)
+            client = None
+            for entry_data in hass.data[DOMAIN].values():
+                if "client" in entry_data:
+                    client = entry_data["client"]
+                    results_per_search = entry_data.get("results_per_search", DEFAULT_RESULTS_PER_SEARCH)
+                    break
+            
+            if not client:
+                _LOGGER.error("No Freesound client available for search")
+                return
+            
+            # Perform search
+            results = await client.search_audio(query, results_per_search)
+            
+            # Apply sorting if requested
+            if sort_by == "name":
+                results = sorted(results, key=lambda x: x.get("name", "").lower())
+            elif sort_by == "duration":
+                results = sorted(results, key=lambda x: x.get("duration", 0))
+            
+            # Log results for user to see in the logs
+            _LOGGER.info("Search for '%s' returned %d results", query, len(results))
+            for idx, result in enumerate(results[:10], 1):  # Show first 10
+                _LOGGER.info(
+                    "%d. %s (ID: %s, Duration: %ds, Tags: %s)",
+                    idx,
+                    result.get("name"),
+                    result.get("id"),
+                    result.get("duration", 0),
+                    result.get("tags", "")[:50],
+                )
+            
+            if len(results) > 10:
+                _LOGGER.info("... and %d more results", len(results) - 10)
+        
         # Register services
         hass.services.async_register(
             DOMAIN,
@@ -228,6 +277,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             handle_remove_favorite,
             schema=REMOVE_FAVORITE_SCHEMA,
         )
+        
+        hass.services.async_register(
+            DOMAIN,
+            SERVICE_SEARCH,
+            handle_search,
+            schema=SEARCH_SCHEMA,
+        )
     
     _LOGGER.info("Setting up Ambient Sounds integration")
     
@@ -244,6 +300,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         hass.services.async_remove(DOMAIN, SERVICE_STOP_SOUND)
         hass.services.async_remove(DOMAIN, SERVICE_ADD_FAVORITE)
         hass.services.async_remove(DOMAIN, SERVICE_REMOVE_FAVORITE)
+        hass.services.async_remove(DOMAIN, SERVICE_SEARCH)
     
     return True
 

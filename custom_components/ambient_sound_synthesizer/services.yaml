@@ -48,7 +48,7 @@ add_favorite:
   fields:
     sound_id:
       name: Sound ID
-      description: Pixabay sound ID
+      description: Freesound sound ID
       required: true
       example: "12345"
       selector:
@@ -62,9 +62,9 @@ add_favorite:
         text:
     url:
       name: URL
-      description: Direct URL to the audio file
+      description: Direct URL to the audio file from Freesound
       required: true
-      example: "https://cdn.pixabay.com/audio/..."
+      example: "https://cdn.freesound.org/previews/..."
       selector:
         text:
     tags:
@@ -95,3 +95,28 @@ remove_favorite:
       example: "12345"
       selector:
         text:
+
+search:
+  name: Search Freesound
+  description: Search Freesound audio library with custom text and optional sorting
+  fields:
+    query:
+      name: Search Query
+      description: Custom search text (words, tags, or phrases)
+      required: true
+      example: "rain thunder storm"
+      selector:
+        text:
+    sort_by:
+      name: Sort By
+      description: Sort results by name or duration
+      required: false
+      example: "name"
+      selector:
+        select:
+          options:
+            - label: "Name (A-Z)"
+              value: "name"
+            - label: "Duration (Shortest First)"
+              value: "duration"
+

@@ -196,14 +196,27 @@ class AmbientSoundsMediaSource(MediaSource):
     async def _browse_search(self, query: str) -> BrowseMediaSource:
         """Browse search results."""
         if not query:
-            # Show search categories/suggestions
+            # Show search categories/suggestions and custom search option
             suggestions = [
                 "rain", "ocean", "forest", "wind", "thunder",
                 "fire", "birds", "river", "waterfall", "cafe",
                 "city", "nature", "ambient", "meditation", "relaxing"
             ]
             
-            children = []
+            children = [
+                # Add custom search option
+                BrowseMediaSource(
+                    domain=DOMAIN,
+                    identifier="search:custom:",
+                    media_class=MediaClass.DIRECTORY,
+                    media_content_type="",
+                    title="✏️ Custom Text Search",
+                    can_play=False,
+                    can_expand=True,
+                    thumbnail=None,
+                ),
+            ]
+            
             for suggestion in suggestions:
                 children.append(
                     BrowseMediaSource(
@@ -223,16 +236,62 @@ class AmbientSoundsMediaSource(MediaSource):
                 identifier="search:",
                 media_class=MediaClass.DIRECTORY,
                 media_content_type="",
-                title="🔍 Search Freesound - Select a category",
+                title="🔍 Search Freesound - Select a category or custom search",
                 can_play=False,
                 can_expand=True,
                 children=children,
             )
         
-        # Perform actual search
-        results = await self._search_freesound(query)
+        # Check if this is a custom search or sort request
+        # Format: custom:{search_text} or {query}|sort:{name|duration}
+        sort_by = None
+        actual_query = query
         
+        if query.startswith("custom:"):
+            # Custom text search - show input prompt
+            return await self._browse_custom_search()
+        elif "|sort:" in query:
+            # Parse sort parameter
+            parts = query.split("|sort:", 1)
+            actual_query = parts[0]
+            sort_by = parts[1] if len(parts) > 1 else None
+        
+        # Perform actual search
+        results = await self._search_freesound(actual_query)
+        
+        # Apply sorting if requested
+        if sort_by == "name":
+            results = sorted(results, key=lambda x: x.get("name", "").lower())
+        elif sort_by == "duration":
+            results = sorted(results, key=lambda x: x.get("duration", 0))
+        
+        # Add sorting options at the top
         children = []
+        if results and not sort_by:
+            # Show sorting options
+            children.extend([
+                BrowseMediaSource(
+                    domain=DOMAIN,
+                    identifier=f"search:{quote(actual_query + '|sort:name')}",
+                    media_class=MediaClass.DIRECTORY,
+                    media_content_type="",
+                    title="📊 Sort by Name (A-Z)",
+                    can_play=False,
+                    can_expand=True,
+                    thumbnail=None,
+                ),
+                BrowseMediaSource(
+                    domain=DOMAIN,
+                    identifier=f"search:{quote(actual_query + '|sort:duration')}",
+                    media_class=MediaClass.DIRECTORY,
+                    media_content_type="",
+                    title="⏱️ Sort by Duration (Shortest First)",
+                    can_play=False,
+                    can_expand=True,
+                    thumbnail=None,
+                ),
+            ])
+        
         for result in results:
             sound_id = str(result["id"])
             duration = result.get("duration", 0)
@@ -248,7 +307,7 @@ class AmbientSoundsMediaSource(MediaSource):
             children.append(
                 BrowseMediaSource(
                     domain=DOMAIN,
-                    identifier=f"search_result:{sound_id}:{quote(query)}",
+                    identifier=f"search_result:{sound_id}:{quote(actual_query)}",
                     media_class=MediaClass.MUSIC,
                     media_content_type=MediaType.MUSIC,
                     title=f"{title}{duration_str}",
@@ -258,26 +317,106 @@ class AmbientSoundsMediaSource(MediaSource):
                 )
             )
         
-        if not children:
+        if not results:
             children.append(
                 BrowseMediaSource(
                     domain=DOMAIN,
                     identifier="no_results",
                     media_class=MediaClass.DIRECTORY,
                     media_content_type="",
-                    title=f"No results found for '{query}'. Try another search term.",
+                    title=f"No results found for '{actual_query}'. Try another search term.",
                     can_play=False,
                     can_expand=False,
                     thumbnail=None,
                 )
             )
         
+        # Create appropriate title based on search type
+        if sort_by == "name":
+            title_text = f"🔍 Results for '{actual_query}' (Sorted by Name)"
+        elif sort_by == "duration":
+            title_text = f"🔍 Results for '{actual_query}' (Sorted by Duration)"
+        else:
+            title_text = f"🔍 Results for: {actual_query}"
+        
         return BrowseMediaSource(
             domain=DOMAIN,
             identifier=f"search:{quote(query)}",
             media_class=MediaClass.DIRECTORY,
             media_content_type="",
-            title=f"🔍 Results for: {query}",
+            title=title_text,
+            can_play=False,
+            can_expand=True,
+            children=children,
+        )
+    
+    async def _browse_custom_search(self) -> BrowseMediaSource:
+        """Show custom search input prompt."""
+        # Since Media Browser doesn't support text input directly,
+        # we'll show instructions for using the service call instead
+        children = [
+            BrowseMediaSource(
+                domain=DOMAIN,
+                identifier="custom_search_info",
+                media_class=MediaClass.DIRECTORY,
+                media_content_type="",
+                title="ℹ️ Custom search requires using the service call",
+                can_play=False,
+                can_expand=False,
+                thumbnail=None,
+            ),
+            BrowseMediaSource(
+                domain=DOMAIN,
+                identifier="custom_search_info2",
+                media_class=MediaClass.DIRECTORY,
+                media_content_type="",
+                title="Use: ambient_sounds.search service with 'query' parameter",
+                can_play=False,
+                can_expand=False,
+                thumbnail=None,
+            ),
+            BrowseMediaSource(
+                domain=DOMAIN,
+                identifier="custom_search_info3",
+                media_class=MediaClass.DIRECTORY,
+                media_content_type="",
+                title="Or use the categories above for quick searches",
+                can_play=False,
+                can_expand=False,
+                thumbnail=None,
+            ),
+        ]
+        
+        # Add some example searches
+        example_searches = [
+            "rain thunder",
+            "ocean waves",
+            "forest morning",
+            "wind howling",
+            "city traffic",
+            "cafe ambience"
+        ]
+        
+        for example in example_searches:
+            children.append(
+                BrowseMediaSource(
+                    domain=DOMAIN,
+                    identifier=f"search:{quote(example)}",
+                    media_class=MediaClass.DIRECTORY,
+                    media_content_type="",
+                    title=f"💡 Try: {example}",
+                    can_play=False,
+                    can_expand=True,
+                    thumbnail=None,
+                )
+            )
+        
+        return BrowseMediaSource(
+            domain=DOMAIN,
+            identifier="search:custom:",
+            media_class=MediaClass.DIRECTORY,
+            media_content_type="",
+            title="✏️ Custom Text Search - Examples",
             can_play=False,
             can_expand=True,
             children=children,

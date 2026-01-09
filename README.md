@@ -5,6 +5,8 @@ A Home Assistant custom integration that lets you search, discover, and play amb
 ## Features
 
 🔍 **Search Freesound's Audio Library**: Browse thousands of high-quality ambient sounds  
+✏️ **Custom Text Search**: Search with your own keywords and phrases  
+📊 **Sort Results**: Sort by name or duration  
 ⭐ **Favorites Management**: Save your favorite sounds for quick access  
 🎵 **Media Browser Integration**: Easy browsing and playback through Home Assistant's UI  
 🤖 **Automation Support**: Full service integration for automations and scripts  
@@ -44,15 +46,43 @@ The primary way to use Ambient Sounds:
 #### Searching for Sounds
 
 1. Click **🔍 Search Freesound**
-2. Select a suggested category (rain, ocean, forest, etc.) or search for custom terms
+2. Choose from:
+   - **✏️ Custom Text Search**: See example searches or use the search service for custom queries
+   - **Suggested categories** (rain, ocean, forest, wind, thunder, fire, birds, river, waterfall, cafe, city, nature, ambient, meditation, relaxing)
 3. Browse the results - each shows duration and descriptive tags
-4. To play a sound:
-   - First, add it to favorites using the `add_favorite` service (see below)
-   - Then it will appear in your **⭐ Favorites** section for easy playback
+4. **Sort Results**: Click the sorting options at the top to sort by name (A-Z) or duration (shortest first)
+5. Click on a sound to see details and preview it
+6. To save it, use the `add_favorite` service with the displayed information
+
+#### Custom Text Search
+
+For custom searches beyond the suggested categories, use the `ambient_sounds.search` service:
+
+```yaml
+service: ambient_sounds.search
+data:
+  query: "rain thunder storm"
+  sort_by: "duration"  # Optional: "name" or "duration"
+```
+
+Results will be logged, and you can browse them in the Media Browser by using the same search term.
 
 ### Services
 
 Use these services for automations and to manage your library:
+
+#### `ambient_sounds.search`
+
+Search Freesound with custom text and optional sorting.
+
+```yaml
+service: ambient_sounds.search
+data:
+  query: "ocean waves beach"  # Your search keywords
+  sort_by: "name"  # Optional: "name" or "duration"
+```
+
+The results are logged and available in the Media Browser under the search term.
 
 #### `ambient_sounds.play_favorite`
 
@@ -75,7 +105,7 @@ service: ambient_sounds.add_favorite
 data:
   sound_id: "12345"  # Freesound sound ID
   name: "Relaxing Rain"  # Your custom name
-  url: "https://cdn.pixabay.com/audio/..."  # Direct audio URL
+  url: "https://cdn.freesound.org/previews/..."  # Direct audio URL from Freesound
   tags: "rain, nature, ambient"  # Optional: descriptive tags
   duration: 120  # Optional: duration in seconds
 ```
