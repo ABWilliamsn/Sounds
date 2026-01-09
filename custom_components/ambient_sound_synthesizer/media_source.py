@@ -57,8 +57,9 @@ class AmbientSoundsMediaSource(MediaSource):
         
         elif media_type == "preview":
             # Preview a search result - format: preview:{sound_id}:{query}:{url}
+            # Using split with maxsplit=2 to handle URLs with colons (e.g., https://)
             preview_parts = media_data.split(":", 2)
-            if len(preview_parts) < 3:
+            if len(preview_parts) != 3:
                 raise Unresolvable(f"Invalid preview identifier: {media_data}")
             
             sound_id, query, audio_url = preview_parts
