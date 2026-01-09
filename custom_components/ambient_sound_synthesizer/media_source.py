@@ -84,10 +84,11 @@ class AmbientSoundsMediaSource(MediaSource):
             return await self._browse_root()
         
         # Handle special info identifiers that don't have colons (non-browsable items)
-        if item.identifier.startswith("custom_search_info") or \
-           item.identifier.startswith("info:") or \
-           item.identifier in ["empty", "no_results"]:
-            # These are informational items that shouldn't be browsable
+        if ":" not in item.identifier:
+            # Identifiers without colons are informational items (not browsable)
+            # This includes: custom_search_info, custom_search_info2, custom_search_info3, 
+            # no_results, empty, etc.
+            _LOGGER.debug("Non-browsable info identifier clicked: %s", item.identifier)
             # Return to the custom search view
             return await self._browse_custom_search()
         
