@@ -15,7 +15,7 @@ A Home Assistant custom integration that lets you search, discover, and play amb
 
 You'll need a free Freesound API key:
 
-1. Go to https://freesound.org/apiv2/apply//
+1. Go to https://freesound.org/apiv2/apply/
 2. Create a free account if you don't have one
 3. Copy your API key from the API documentation page
 
@@ -154,7 +154,7 @@ After initial setup, you can modify settings through **Options**:
 ## Troubleshooting
 
 **"Invalid API key" error during setup:**
-- Double-check your API key from https://freesound.org/apiv2/apply//
+- Double-check your API key from https://freesound.org/apiv2/apply/
 - Ensure you copied the entire key without extra spaces
 
 **No search results:**
@@ -176,7 +176,7 @@ Freesound's free tier provides:
 
 ## Credits
 
-This integration uses audio from [Freesound](https://pixabay.com/), which provides high-quality royalty-free audio content. All audio is subject to Freesound's license terms.
+This integration uses audio from [Freesound](https://freesound.org/), which provides high-quality royalty-free audio content. All audio is subject to Freesound's license terms.
 
 ## Support
 

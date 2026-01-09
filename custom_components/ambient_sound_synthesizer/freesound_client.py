@@ -69,7 +69,8 @@ class FreesoundClient:
                             previews = sound.get("previews", {})
                             preview_url = previews.get("preview-hq-mp3") or previews.get("preview-lq-mp3")
                             
-                            if preview_url:
+                            # Validate that preview URL is from Freesound domain for security
+                            if preview_url and preview_url.startswith("https://cdn.freesound.org/"):
                                 transformed_results.append({
                                     "id": sound.get("id"),
                                     "name": sound.get("name", "Unknown"),
