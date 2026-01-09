@@ -55,6 +55,28 @@ class AmbientSoundsMediaSource(MediaSource):
             _LOGGER.info("Resolving favorite: %s", favorite["name"])
             return PlayMedia(favorite["url"], "audio/mpeg")
         
+        elif media_type == "preview":
+            # Preview a search result
+            # Get any available client to search
+            for entry_id, entry_data in self.hass.data.get(DOMAIN, {}).items():
+                client = entry_data.get("client")
+                if client:
+                    try:
+                        # Search for the sound by ID
+                        results = await client.search_audio("", 200)  # Get recent sounds
+                        for result in results:
+                            if str(result["id"]) == media_id:
+                                # Try to get audio URL
+                                audio_url = result.get("previewURL") or result.get("pageURL")
+                                if audio_url:
+                                    _LOGGER.info("Resolving preview for sound ID: %s", media_id)
+                                    return PlayMedia(audio_url, "audio/mpeg")
+                        break
+                    except Exception as err:
+                        _LOGGER.error("Error getting preview: %s", err)
+            
+            raise Unresolvable(f"Could not find preview for sound: {media_id}")
+        
         else:
             raise Unresolvable(f"Unknown media type: {media_type}")
 
@@ -79,6 +101,14 @@ class AmbientSoundsMediaSource(MediaSource):
         elif category == "search":
             query = unquote(value) if value else ""
             return await self._browse_search(query)
+        elif category == "search_result":
+            # Parse search_result identifier: search_result:{sound_id}:{query}
+            result_parts = value.split(":", 1)
+            if len(result_parts) == 2:
+                sound_id, query = result_parts
+                query = unquote(query)
+                return await self._browse_search_result(sound_id, query)
+            raise Unresolvable(f"Invalid search result identifier: {value}")
         else:
             raise Unresolvable(f"Unknown category: {category}")
 
@@ -254,6 +284,107 @@ class AmbientSoundsMediaSource(MediaSource):
             media_class=MediaClass.DIRECTORY,
             media_content_type="",
             title=f"🔍 Results for: {query}",
+            can_play=False,
+            can_expand=True,
+            children=children,
+        )
+
+    async def _browse_search_result(self, sound_id: str, query: str) -> BrowseMediaSource:
+        """Browse a specific search result to show options."""
+        # Get the search results again to find this specific sound
+        results = await self._search_pixabay(query)
+        
+        # Find the specific sound
+        sound = None
+        for result in results:
+            if str(result["id"]) == sound_id:
+                sound = result
+                break
+        
+        if not sound:
+            raise Unresolvable(f"Sound not found: {sound_id}")
+        
+        # Create a detail view showing the sound info
+        duration = sound.get("duration", 0)
+        minutes = duration // 60
+        seconds = duration % 60
+        duration_str = f"{minutes}:{seconds:02d}" if duration else "Unknown"
+        
+        tags = sound.get("tags", "No tags")
+        
+        # Get the audio URL
+        audio_url = None
+        for key in ["previewURL", "pageURL"]:
+            if key in sound:
+                audio_url = sound[key]
+                break
+        
+        # Since we can't actually add favorites from Media Browser UI,
+        # we'll show instructions
+        info_text = (
+            f"To add this sound to your favorites, use the service:\n\n"
+            f"Service: ambient_sounds.add_favorite\n"
+            f"Data:\n"
+            f"  sound_id: \"{sound_id}\"\n"
+            f"  name: \"{tags[:30]}\"\n"
+            f"  url: \"{audio_url}\"\n"
+            f"  duration: {duration}\n"
+            f"  tags: \"{tags}\""
+        )
+        
+        children = [
+            BrowseMediaSource(
+                domain=DOMAIN,
+                identifier=f"info:{sound_id}",
+                media_class=MediaClass.DIRECTORY,
+                media_content_type="",
+                title=f"📋 Tags: {tags[:50]}",
+                can_play=False,
+                can_expand=False,
+                thumbnail=None,
+            ),
+            BrowseMediaSource(
+                domain=DOMAIN,
+                identifier=f"info:{sound_id}:duration",
+                media_class=MediaClass.DIRECTORY,
+                media_content_type="",
+                title=f"⏱️ Duration: {duration_str}",
+                can_play=False,
+                can_expand=False,
+                thumbnail=None,
+            ),
+            BrowseMediaSource(
+                domain=DOMAIN,
+                identifier=f"info:{sound_id}:id",
+                media_class=MediaClass.DIRECTORY,
+                media_content_type="",
+                title=f"🔑 ID: {sound_id}",
+                can_play=False,
+                can_expand=False,
+                thumbnail=None,
+            ),
+        ]
+        
+        if audio_url:
+            children.append(
+                BrowseMediaSource(
+                    domain=DOMAIN,
+                    identifier=f"preview:{sound_id}",
+                    media_class=MediaClass.MUSIC,
+                    media_content_type=MediaType.MUSIC,
+                    title="▶️ Preview (if supported by player)",
+                    can_play=True,
+                    can_expand=False,
+                    thumbnail=None,
+                )
+            )
+        
+        return BrowseMediaSource(
+            domain=DOMAIN,
+            identifier=f"search_result:{sound_id}:{quote(query)}",
+            media_class=MediaClass.DIRECTORY,
+            media_content_type="",
+            title=f"🎵 {tags[:40]}",
             can_play=False,
             can_expand=True,
             children=children,
