@@ -3,8 +3,8 @@
   "name": "Ambient Sounds",
   "codeowners": ["@ABWilliamsn"],
   "config_flow": true,
-  "documentation": "https://github.com/ABWilliamsn/Ambient-Sound-Synthesizer",
-  "issue_tracker": "https://github.com/ABWilliamsn/Ambient-Sound-Synthesizer/issues",
+  "documentation": "https://github.com/ABWilliamsn/Ambient-Sounds",
+  "issue_tracker": "https://github.com/ABWilliamsn/Ambient-Sounds/issues",
   "iot_class": "cloud_polling",
   "requirements": ["aiohttp>=3.8.0"],
   "version": "2.0.0"
