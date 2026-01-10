@@ -23,25 +23,49 @@ You'll need a free Freesound API key:
 
 ## Installation
 
+> **Note**: For HACS installation to work, the integration files from PR #2 or #3 need to be merged to the main branch. Until then, please use Option 2 (Manual Installation from GitHub) and clone from the appropriate branch (e.g., `copilot/fix-config-flow-error`).
+
 ### Option 1: HACS (Recommended)
 
 [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=ABWilliamsn&repository=Ambient-Sound-Synthesizer&category=integration)
 
 1. Ensure [HACS](https://hacs.xyz/) is installed
-2. In Home Assistant, go to **HACS** → **Integrations**
-3. Click the **+** button and search for "**Ambient Sounds**"
-4. Click **Download**
-5. Restart Home Assistant
-6. Go to **Settings** → **Devices & Services** → **Add Integration**
-7. Search for "**Ambient Sounds**"
-8. Enter your Freesound API key when prompted
+
+2. Add this repository as a custom repository in HACS:
+   - In Home Assistant, go to **HACS** → **Integrations**
+   - Click the **⋮** (three dots) menu in the top right
+   - Select **Custom repositories**
+   - Enter the repository URL: `https://github.com/ABWilliamsn/Ambient-Sound-Synthesizer`
+   - Select category: **Integration**
+   - Click **Add**
+
+3. Install the integration:
+   - Click the **+** button in HACS Integrations
+   - Search for "**Ambient Sounds**"
+   - Click **Download**
+
+4. Restart Home Assistant
+
+5. Configure the integration:
+   - Go to **Settings** → **Devices & Services** → **Add Integration**
+   - Search for "**Ambient Sounds**"
+   - Enter your Freesound API key when prompted
 
 ### Option 2: Manual Installation from GitHub
 
-1. Download the latest release or clone this repository:
+1. Download the latest release or clone this repository from the branch with the integration files:
    ```bash
+   # Clone the repository and checkout the branch with integration files
    git clone https://github.com/ABWilliamsn/Ambient-Sound-Synthesizer.git
+   cd Ambient-Sound-Synthesizer
+   git checkout copilot/fix-config-flow-error  # Or the branch with the latest integration code
    ```
+   
+   Alternatively, download directly from GitHub:
+   - Go to https://github.com/ABWilliamsn/Ambient-Sound-Synthesizer
+   - Switch to the branch with the integration files (e.g., `copilot/fix-config-flow-error`)
+   - Click **Code** → **Download ZIP**
+   - Extract the ZIP file
 
 2. Copy the `custom_components/ambient_sound_synthesizer` directory to your Home Assistant's `config/custom_components/` directory:
    ```bash
