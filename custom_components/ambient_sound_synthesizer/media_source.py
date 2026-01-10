@@ -83,19 +83,16 @@ class AmbientSoundsMediaSource(MediaSource):
             # Root level - show Favorites and Search
             return await self._browse_root()
         
-        # Handle special info identifiers that don't have colons (non-browsable items)
+        # Parse identifier - all valid identifiers must have a colon
         if ":" not in item.identifier:
-            # Identifiers without colons are informational items (not browsable)
-            # This includes: custom_search_info, custom_search_info2, custom_search_info3, 
-            # no_results, empty, etc.
-            _LOGGER.debug("Non-browsable info identifier clicked: %s", item.identifier)
-            # Return to the custom search view
-            return await self._browse_custom_search()
+            # This shouldn't happen with the new structure, but handle gracefully
+            _LOGGER.warning("Invalid identifier format (no colon): %s", item.identifier)
+            return await self._browse_root()
         
-        # Parse identifier
         parts = item.identifier.split(":", 1)
         if len(parts) != 2:
-            raise Unresolvable(f"Invalid identifier: {item.identifier}")
+            _LOGGER.warning("Invalid identifier format: %s", item.identifier)
+            return await self._browse_root()
         
         category, value = parts
         
@@ -111,9 +108,15 @@ class AmbientSoundsMediaSource(MediaSource):
                 sound_id, query = result_parts
                 query = unquote(query)
                 return await self._browse_search_result(sound_id, query)
-            raise Unresolvable(f"Invalid search result identifier: {value}")
+            _LOGGER.warning("Invalid search result identifier: %s", value)
+            return await self._browse_root()
+        elif category == "info":
+            # Info items are not browsable - return to root
+            _LOGGER.debug("Info item clicked: %s", item.identifier)
+            return await self._browse_root()
         else:
-            raise Unresolvable(f"Unknown category: {category}")
+            _LOGGER.warning("Unknown category: %s", category)
+            return await self._browse_root()
 
     async def _browse_root(self) -> BrowseMediaSource:
         """Browse root level."""
@@ -181,7 +184,7 @@ class AmbientSoundsMediaSource(MediaSource):
             children.append(
                 BrowseMediaSource(
                     domain=DOMAIN,
-                    identifier="empty",
+                    identifier="info:no_favorites",
                     media_class=MediaClass.DIRECTORY,
                     media_content_type="",
                     title="No favorites yet. Search Freesound to add some!",
@@ -330,7 +333,7 @@ class AmbientSoundsMediaSource(MediaSource):
             children.append(
                 BrowseMediaSource(
                     domain=DOMAIN,
-                    identifier="no_results",
+                    identifier="info:no_results",
                     media_class=MediaClass.DIRECTORY,
                     media_content_type="",
                     title=f"No results found for '{actual_query}'. Try another search term.",
@@ -360,60 +363,33 @@ class AmbientSoundsMediaSource(MediaSource):
         )
     
     async def _browse_custom_search(self) -> BrowseMediaSource:
-        """Show custom search input prompt."""
+        """Show custom search examples."""
         # Since Media Browser doesn't support text input directly,
-        # we'll show instructions for using the service call instead
-        children = [
-            BrowseMediaSource(
-                domain=DOMAIN,
-                identifier="custom_search_info",
-                media_class=MediaClass.DIRECTORY,
-                media_content_type="",
-                title="ℹ️ Custom search requires using the service call",
-                can_play=False,
-                can_expand=False,
-                thumbnail=None,
-            ),
-            BrowseMediaSource(
-                domain=DOMAIN,
-                identifier="custom_search_info2",
-                media_class=MediaClass.DIRECTORY,
-                media_content_type="",
-                title="Use: ambient_sounds.search service with 'query' parameter",
-                can_play=False,
-                can_expand=False,
-                thumbnail=None,
-            ),
-            BrowseMediaSource(
-                domain=DOMAIN,
-                identifier="custom_search_info3",
-                media_class=MediaClass.DIRECTORY,
-                media_content_type="",
-                title="Or use the categories above for quick searches",
-                can_play=False,
-                can_expand=False,
-                thumbnail=None,
-            ),
-        ]
+        # show example searches that users can click
+        # For custom searches, users need to use the ambient_sounds.search service
         
-        # Add some example searches
         example_searches = [
-            "rain thunder",
-            "ocean waves",
-            "forest morning",
-            "wind howling",
-            "city traffic",
-            "cafe ambience"
+            ("rain thunder", "🌧️ Rain + Thunder"),
+            ("ocean waves", "🌊 Ocean Waves"),
+            ("forest morning", "🌲 Forest Morning"),
+            ("wind howling", "💨 Wind Howling"),
+            ("city traffic", "🚗 City Traffic"),
+            ("cafe ambience", "☕ Cafe Ambience"),
+            ("fireplace crackling", "🔥 Fireplace"),
+            ("birds chirping", "🐦 Birds Chirping"),
+            ("river flowing", "🏞️ River Flowing"),
+            ("thunderstorm", "⛈️ Thunderstorm"),
         ]
         
-        for example in example_searches:
+        children = []
+        for search_term, display_name in example_searches:
             children.append(
                 BrowseMediaSource(
                     domain=DOMAIN,
-                    identifier=f"search:{quote(example)}",
+                    identifier=f"search:{quote(search_term)}",
                     media_class=MediaClass.DIRECTORY,
                     media_content_type="",
-                    title=f"💡 Try: {example}",
+                    title=display_name,
                     can_play=False,
                     can_expand=True,
                     thumbnail=None,
@@ -425,7 +401,7 @@ class AmbientSoundsMediaSource(MediaSource):
             identifier="search:custom:",
             media_class=MediaClass.DIRECTORY,
             media_content_type="",
-            title="✏️ Custom Text Search - Examples",
+            title="✏️ Custom Search Examples (Click to search, or use ambient_sounds.search service)",
             can_play=False,
             can_expand=True,
             children=children,
