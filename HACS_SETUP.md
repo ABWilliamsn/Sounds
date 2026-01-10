@@ -32,7 +32,7 @@ HACS requires proper semantic version tags to function correctly. This repositor
 
 - **Version**: 2.0.0
 - **Tag**: v2.0.0
-- **Tagged Commit**: f7d5ae3
+- **Includes**: HACS configuration, documentation updates, and manifest fixes
 
 ## Installation via HACS
 

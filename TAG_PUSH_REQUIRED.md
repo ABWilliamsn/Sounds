@@ -8,12 +8,17 @@ This error occurs because HACS requires proper semantic version tags (like v2.0.
 ## Solution Implemented
 
 ### 1. Created Version Tag
-A git tag `v2.0.0` has been created locally, pointing to commit `f7d5ae3`. This tag matches the version specified in the manifest.json file.
+A git tag `v2.0.0` has been created, pointing to the commit with all HACS compatibility fixes. This tag matches the version specified in the manifest.json file.
 
 ```bash
 # Tag created with:
-git tag v2.0.0 f7d5ae3
+git tag v2.0.0
 ```
+
+The tag includes:
+- HACS configuration files (hacs.json)
+- Updated documentation (README.md, HACS_SETUP.md)
+- Fixed repository URLs in manifest.json
 
 ### 2. Added HACS Configuration Files
 - **hacs.json**: HACS configuration file that helps HACS understand the repository structure
@@ -55,7 +60,7 @@ Once the tag is pushed to GitHub:
 
 After pushing the tag, verify the fix by:
 1. Checking that the tag appears on GitHub: https://github.com/ABWilliamsn/Ambient-Sounds/tags
-2. Confirming the tag points to commit f7d5ae3
+2. Confirming the tag points to a commit with all HACS compatibility fixes
 3. Testing HACS installation of the integration
 
 ## Future Version Updates
