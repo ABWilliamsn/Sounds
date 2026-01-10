@@ -23,6 +23,26 @@ You'll need a free Freesound API key:
 
 ## Installation
 
+### Option 1: HACS (Recommended)
+
+1. Open HACS in your Home Assistant instance
+2. Click on "Integrations"
+3. Click the three dots in the top right corner
+4. Select "Custom repositories"
+5. Add this repository URL: `https://github.com/ABWilliamsn/Ambient-Sounds`
+6. Select category "Integration"
+7. Click "Add"
+8. Find "Ambient Sounds" in the list and click "Download"
+9. Restart Home Assistant
+10. Go to **Settings** → **Devices & Services** → **Add Integration**
+11. Search for "**Ambient Sounds**"
+12. Enter your Freesound API key when prompted
+13. (Optional) Configure the number of results per search (default: 20)
+
+For detailed HACS setup instructions and troubleshooting, see [HACS_SETUP.md](HACS_SETUP.md).
+
+### Option 2: Manual Installation
+
 1. Copy the `custom_components/ambient_sound_synthesizer` directory to your Home Assistant's `config/custom_components/` directory
 2. Restart Home Assistant
 3. Go to **Settings** → **Devices & Services** → **Add Integration**
