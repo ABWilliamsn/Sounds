@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 import logging
+import tempfile
+from pathlib import Path
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
@@ -271,11 +273,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         
         async def handle_play_noise(call: ServiceCall) -> None:
             """Handle the play_noise service call."""
-            import base64
-            import tempfile
-            import os
-            from pathlib import Path
-            
             entity_ids = call.data["entity_id"]
             noise_type = call.data["noise_type"]
             volume = call.data.get("volume", 0.5)

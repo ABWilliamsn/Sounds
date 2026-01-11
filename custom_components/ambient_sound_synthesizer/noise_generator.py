@@ -275,13 +275,14 @@ class NoiseGenerator:
             WAV file as bytes
         """
         # Convert float audio to 16-bit PCM
-        audio_int16 = np.int16(audio_data * 32767)
+        max_int16 = 2**(BITS_PER_SAMPLE - 1) - 1
+        audio_int16 = np.int16(audio_data * max_int16)
         
         # Create WAV file in memory
         wav_buffer = io.BytesIO()
         with wave.open(wav_buffer, 'wb') as wav_file:
             wav_file.setnchannels(1)  # Mono
-            wav_file.setsampwidth(2)  # 16-bit
+            wav_file.setsampwidth(BITS_PER_SAMPLE // 8)  # 16-bit = 2 bytes
             wav_file.setframerate(self.sample_rate)
             wav_file.writeframes(audio_int16.tobytes())
         
