@@ -36,7 +36,10 @@ class AmbientSoundsMediaSource(MediaSource):
 
     async def async_resolve_media(self, item: MediaSourceItem) -> PlayMedia:
         """Resolve media to a playable URL."""
-        # identifier format: "fav:{favorite_id}" or "preview:{sound_id}:{query}:{url}"
+        # identifier format: 
+        # - "fav:{favorite_id}"
+        # - "preview:{sound_id}:{query}:{url}"
+        # - "noise:{noise_type}:{duration}"
         if not item.identifier:
             raise Unresolvable("No identifier provided")
         
@@ -46,7 +49,28 @@ class AmbientSoundsMediaSource(MediaSource):
         
         media_type, media_data = parts
         
-        if media_type == "fav":
+        if media_type == "noise":
+            # Generate noise on-demand
+            # Format: noise:{noise_type}:{duration}
+            noise_parts = media_data.split(":", 1)
+            if len(noise_parts) != 2:
+                raise Unresolvable(f"Invalid noise identifier: {media_data}")
+            
+            noise_type, duration_str = noise_parts
+            try:
+                duration = int(duration_str)
+            except ValueError:
+                raise Unresolvable(f"Invalid duration: {duration_str}")
+            
+            _LOGGER.info("Generating %s noise for %d seconds", noise_type, duration)
+            
+            # Generate the noise
+            file_path = await self._generate_noise(noise_type, duration)
+            
+            # Return local file path
+            return PlayMedia(f"file://{file_path}", "audio/wav")
+        
+        elif media_type == "fav":
             # Playing a favorite
             favorite = await self._get_favorite(media_data)
             if not favorite:
@@ -96,7 +120,26 @@ class AmbientSoundsMediaSource(MediaSource):
         
         category, value = parts
         
-        if category == "favorites":
+        if category == "noise_generator":
+            # Parse noise_generator identifier
+            # Format: noise_generator: (root)
+            # Format: noise_generator:{noise_type} (show duration options)
+            # Format: noise_generator:{noise_type}:{duration} (playable)
+            if not value:
+                return await self._browse_noise_generator()
+            else:
+                # Check if we have a duration specified
+                if ":" in value:
+                    noise_parts = value.split(":", 1)
+                    noise_type = noise_parts[0]
+                    duration = noise_parts[1]
+                    # This shouldn't be browsed, but handled in resolve
+                    return await self._browse_noise_generator()
+                else:
+                    # Show duration options for this noise type
+                    noise_type = value
+                    return await self._browse_noise_duration(noise_type)
+        elif category == "favorites":
             return await self._browse_favorites()
         elif category == "search":
             query = unquote(value) if value else ""
@@ -121,6 +164,16 @@ class AmbientSoundsMediaSource(MediaSource):
     async def _browse_root(self) -> BrowseMediaSource:
         """Browse root level."""
         children = [
+            BrowseMediaSource(
+                domain=DOMAIN,
+                identifier="noise_generator:",
+                media_class=MediaClass.DIRECTORY,
+                media_content_type="",
+                title="🎛️ Noise Generator",
+                can_play=False,
+                can_expand=True,
+                thumbnail=None,
+            ),
             BrowseMediaSource(
                 domain=DOMAIN,
                 identifier="favorites:",
@@ -525,6 +578,128 @@ class AmbientSoundsMediaSource(MediaSource):
             can_expand=True,
             children=children,
         )
+
+    async def _browse_noise_generator(self) -> BrowseMediaSource:
+        """Browse noise generator options."""
+        noise_types = [
+            ("white", "⚪ White Noise", "Equal energy at all frequencies - great for sleep & focus"),
+            ("pink", "🎀 Pink Noise", "Equal energy per octave - more natural than white noise"),
+            ("brown", "🟤 Brown Noise", "Deeper, bass-heavy sound - very soothing"),
+            ("fan", "🌀 Fan Noise", "Electric fan simulation with motor hum"),
+            ("rain", "🌧️ Rain", "Realistic rainfall with droplet sounds"),
+            ("ocean", "🌊 Ocean Waves", "Rhythmic wave patterns and surf"),
+            ("wind", "💨 Wind", "Gusting wind with natural variation"),
+        ]
+        
+        children = []
+        for noise_type, title, description in noise_types:
+            children.append(
+                BrowseMediaSource(
+                    domain=DOMAIN,
+                    identifier=f"noise_generator:{noise_type}",
+                    media_class=MediaClass.DIRECTORY,
+                    media_content_type="",
+                    title=f"{title}",
+                    can_play=False,
+                    can_expand=True,
+                    thumbnail=None,
+                )
+            )
+        
+        return BrowseMediaSource(
+            domain=DOMAIN,
+            identifier="noise_generator:",
+            media_class=MediaClass.DIRECTORY,
+            media_content_type="",
+            title="🎛️ Noise Generator - Select a noise type",
+            can_play=False,
+            can_expand=True,
+            children=children,
+        )
+    
+    async def _browse_noise_duration(self, noise_type: str) -> BrowseMediaSource:
+        """Browse duration options for a noise type."""
+        # Define common durations in seconds
+        durations = [
+            (60, "1 minute"),
+            (300, "5 minutes"),
+            (600, "10 minutes"),
+            (900, "15 minutes"),
+            (1800, "30 minutes"),
+            (3600, "1 hour"),
+            (7200, "2 hours"),
+            (10800, "3 hours"),
+        ]
+        
+        # Get the display name for the noise type
+        noise_names = {
+            "white": "⚪ White Noise",
+            "pink": "🎀 Pink Noise",
+            "brown": "🟤 Brown Noise",
+            "fan": "🌀 Fan Noise",
+            "rain": "🌧️ Rain",
+            "ocean": "🌊 Ocean Waves",
+            "wind": "💨 Wind",
+        }
+        noise_name = noise_names.get(noise_type, noise_type.title())
+        
+        children = []
+        for duration_sec, duration_label in durations:
+            children.append(
+                BrowseMediaSource(
+                    domain=DOMAIN,
+                    identifier=f"noise:{noise_type}:{duration_sec}",
+                    media_class=MediaClass.MUSIC,
+                    media_content_type=MediaType.MUSIC,
+                    title=f"▶️ Play for {duration_label}",
+                    can_play=True,
+                    can_expand=False,
+                    thumbnail=None,
+                )
+            )
+        
+        return BrowseMediaSource(
+            domain=DOMAIN,
+            identifier=f"noise_generator:{noise_type}",
+            media_class=MediaClass.DIRECTORY,
+            media_content_type="",
+            title=f"{noise_name} - Select duration",
+            can_play=False,
+            can_expand=True,
+            children=children,
+        )
+    
+    async def _generate_noise(self, noise_type: str, duration: int) -> str:
+        """Generate noise and return the file path."""
+        from pathlib import Path
+        import tempfile
+        from .noise_generator import NoiseGenerator
+        
+        # Create temp directory for generated audio
+        temp_dir = Path(tempfile.gettempdir()) / "ambient_sounds"
+        temp_dir.mkdir(exist_ok=True)
+        
+        # Generate unique filename
+        temp_file = temp_dir / f"{noise_type}_noise_{duration}s.wav"
+        
+        # Check if file already exists and is recent (within last hour)
+        if temp_file.exists():
+            import time
+            file_age = time.time() - temp_file.stat().st_mtime
+            if file_age < 3600:  # 1 hour
+                _LOGGER.info("Using cached noise file: %s", temp_file)
+                return str(temp_file)
+        
+        # Generate the noise
+        generator = NoiseGenerator(duration=duration)
+        wav_data = generator.generate_noise(noise_type, intensity=0.5)
+        
+        # Save to file
+        with open(temp_file, "wb") as f:
+            f.write(wav_data)
+        
+        _LOGGER.info("Generated noise saved to %s", temp_file)
+        return str(temp_file)
 
     async def _get_favorite(self, favorite_id: str) -> dict | None:
         """Get a favorite by ID."""
