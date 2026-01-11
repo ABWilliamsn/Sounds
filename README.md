@@ -230,6 +230,8 @@ automation:
           duration: 3600  # 1 hour
 ```
 
+For more automation examples, see [example_automations.yaml](example_automations.yaml).
+
 **Play rain sounds at bedtime:**
 ```yaml
 automation:
