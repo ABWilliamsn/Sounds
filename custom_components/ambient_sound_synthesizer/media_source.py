@@ -2,6 +2,9 @@
 from __future__ import annotations
 
 import logging
+import tempfile
+import time
+from pathlib import Path
 from urllib.parse import quote, unquote
 
 from homeassistant.components.media_player import MediaClass, MediaType
@@ -17,6 +20,9 @@ from homeassistant.core import HomeAssistant
 from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
+
+# Default intensity for generated noise
+DEFAULT_NOISE_INTENSITY = 0.5
 
 
 async def async_get_media_source(hass: HomeAssistant) -> AmbientSoundsMediaSource:
@@ -122,23 +128,13 @@ class AmbientSoundsMediaSource(MediaSource):
         
         if category == "noise_generator":
             # Parse noise_generator identifier
-            # Format: noise_generator: (root)
+            # Format: noise_generator: (root - show all noise types)
             # Format: noise_generator:{noise_type} (show duration options)
-            # Format: noise_generator:{noise_type}:{duration} (playable)
             if not value:
                 return await self._browse_noise_generator()
             else:
-                # Check if we have a duration specified
-                if ":" in value:
-                    noise_parts = value.split(":", 1)
-                    noise_type = noise_parts[0]
-                    duration = noise_parts[1]
-                    # This shouldn't be browsed, but handled in resolve
-                    return await self._browse_noise_generator()
-                else:
-                    # Show duration options for this noise type
-                    noise_type = value
-                    return await self._browse_noise_duration(noise_type)
+                # Show duration options for this noise type
+                return await self._browse_noise_duration(value)
         elif category == "favorites":
             return await self._browse_favorites()
         elif category == "search":
@@ -671,8 +667,6 @@ class AmbientSoundsMediaSource(MediaSource):
     
     async def _generate_noise(self, noise_type: str, duration: int) -> str:
         """Generate noise and return the file path."""
-        from pathlib import Path
-        import tempfile
         from .noise_generator import NoiseGenerator
         
         # Create temp directory for generated audio
@@ -684,7 +678,6 @@ class AmbientSoundsMediaSource(MediaSource):
         
         # Check if file already exists and is recent (within last hour)
         if temp_file.exists():
-            import time
             file_age = time.time() - temp_file.stat().st_mtime
             if file_age < 3600:  # 1 hour
                 _LOGGER.info("Using cached noise file: %s", temp_file)
@@ -692,7 +685,7 @@ class AmbientSoundsMediaSource(MediaSource):
         
         # Generate the noise
         generator = NoiseGenerator(duration=duration)
-        wav_data = generator.generate_noise(noise_type, intensity=0.5)
+        wav_data = generator.generate_noise(noise_type, intensity=DEFAULT_NOISE_INTENSITY)
         
         # Save to file
         with open(temp_file, "wb") as f:
