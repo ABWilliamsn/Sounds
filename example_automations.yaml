@@ -1,0 +1,135 @@
+# Example Home Assistant Automations for Ambient Sounds Noise Generator
+#
+# These examples show how to use the noise generator in your Home Assistant automations.
+# Copy the examples you want to use into your automations.yaml file.
+
+# Example 1: Play white noise at bedtime
+automation:
+  - alias: "Bedtime White Noise"
+    description: "Play white noise in the bedroom at bedtime"
+    trigger:
+      - platform: time
+        at: "22:00:00"
+    action:
+      - service: ambient_sounds.play_noise
+        data:
+          entity_id: media_player.bedroom_speaker
+          noise_type: white
+          volume: 0.3
+          intensity: 0.5
+          duration: 28800  # 8 hours
+
+  # Example 2: Play pink noise during work hours for focus
+  - alias: "Work Focus Pink Noise"
+    description: "Play pink noise during work hours for better focus"
+    trigger:
+      - platform: time
+        at: "09:00:00"
+    condition:
+      - condition: state
+        entity_id: binary_sensor.workday
+        state: "on"
+    action:
+      - service: ambient_sounds.play_noise
+        data:
+          entity_id: media_player.office_speaker
+          noise_type: pink
+          volume: 0.2
+          intensity: 0.4
+          duration: 3600  # 1 hour
+
+  # Example 3: Play rain sounds when it's raining outside
+  - alias: "Rain Ambience When Raining"
+    description: "Play rain sounds when weather is rainy"
+    trigger:
+      - platform: state
+        entity_id: weather.home
+        to: "rainy"
+    action:
+      - service: ambient_sounds.play_noise
+        data:
+          entity_id: media_player.living_room_speaker
+          noise_type: rain
+          volume: 0.4
+          intensity: 0.6
+          duration: 7200  # 2 hours
+
+  # Example 4: Play ocean sounds for meditation
+  - alias: "Meditation Ocean Sounds"
+    description: "Play ocean sounds when meditation routine starts"
+    trigger:
+      - platform: state
+        entity_id: input_boolean.meditation_mode
+        to: "on"
+    action:
+      - service: ambient_sounds.play_noise
+        data:
+          entity_id: media_player.meditation_room_speaker
+          noise_type: ocean
+          volume: 0.35
+          intensity: 0.5
+          duration: 1800  # 30 minutes
+
+  # Example 5: Play fan noise in summer
+  - alias: "Summer Fan Noise"
+    description: "Play fan noise on hot summer days"
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.outdoor_temperature
+        above: 85
+    action:
+      - service: ambient_sounds.play_noise
+        data:
+          entity_id: media_player.bedroom_speaker
+          noise_type: fan
+          volume: 0.3
+          intensity: 0.5
+          duration: 14400  # 4 hours
+
+  # Example 6: Baby sleep brown noise
+  - alias: "Baby Sleep Brown Noise"
+    description: "Play brown noise when baby is sleeping"
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.baby_room_motion
+        to: "off"
+        for:
+          minutes: 5
+    action:
+      - service: ambient_sounds.play_noise
+        data:
+          entity_id: media_player.baby_room_speaker
+          noise_type: brown
+          volume: 0.25
+          intensity: 0.4
+          duration: 10800  # 3 hours
+
+  # Example 7: Wind sounds for relaxation
+  - alias: "Evening Wind Relaxation"
+    description: "Play wind sounds in the evening"
+    trigger:
+      - platform: time
+        at: "20:00:00"
+    action:
+      - service: ambient_sounds.play_noise
+        data:
+          entity_id: media_player.living_room_speaker
+          noise_type: wind
+          volume: 0.3
+          intensity: 0.5
+          duration: 3600  # 1 hour
+
+  # Example 8: Stop all noise when someone arrives home
+  - alias: "Stop Noise When Home"
+    description: "Stop ambient noise when someone arrives home"
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.front_door
+        to: "on"
+    action:
+      - service: ambient_sounds.stop_sound
+        data:
+          entity_id:
+            - media_player.living_room_speaker
+            - media_player.bedroom_speaker
+            - media_player.office_speaker
