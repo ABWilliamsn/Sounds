@@ -1,6 +1,6 @@
 # Ambient Sounds
 
-A Home Assistant custom integration that lets you search, discover, and play ambient sounds from Freesound's extensive audio library directly on your media players.
+A Home Assistant custom integration that lets you search, discover, and play ambient sounds from Freesound's extensive audio library, plus generate various ambient noises on-demand directly on your media players.
 
 ## Features
 
@@ -11,6 +11,7 @@ A Home Assistant custom integration that lets you search, discover, and play amb
 🎵 **Media Browser Integration**: Easy browsing and playback through Home Assistant's UI  
 🤖 **Automation Support**: Full service integration for automations and scripts  
 ☁️ **Cloud Streaming**: No local storage needed - streams directly from Freesound  
+🎛️ **Built-in Noise Generator**: Generate white, pink, brown noise, plus fan, rain, ocean, and wind sounds  
 🆓 **Free API**: 5,000 requests per month on Freesound's free tier  
 
 ## Prerequisites
@@ -51,6 +52,33 @@ For detailed HACS setup instructions and troubleshooting, see [HACS_SETUP.md](HA
 6. (Optional) Configure the number of results per search (default: 20)
 
 ## Usage
+
+This integration offers two ways to play ambient sounds:
+
+1. **Generated Noise** (recommended for basic noise types) - Create white, pink, brown noise, plus fan, rain, ocean, and wind sounds locally without requiring internet
+2. **Freesound Library** - Search and stream thousands of ambient sounds from Freesound's cloud library
+
+### Generated Noise (No Internet Required)
+
+The simplest way to play ambient noise is using the built-in noise generator. Use the `ambient_sounds.play_noise` service in automations or scripts:
+
+```yaml
+service: ambient_sounds.play_noise
+data:
+  entity_id: media_player.bedroom_speaker
+  noise_type: white  # white, pink, brown, fan, rain, ocean, wind
+  volume: 0.3
+  duration: 3600  # seconds
+```
+
+**Available noise types:**
+- **white** - White noise for sleep and focus
+- **pink** - Pink noise (more natural sounding than white)
+- **brown** - Brown noise (deeper, bass-heavy)
+- **fan** - Fan noise simulation
+- **rain** - Rainfall sounds
+- **ocean** - Ocean wave sounds
+- **wind** - Wind gusts and ambience
 
 ### Media Browser
 
@@ -152,7 +180,55 @@ data:
   entity_id: media_player.living_room_speaker
 ```
 
+#### `ambient_sounds.play_noise`
+
+Generate and play ambient noise on your media player. This service creates noise in real-time without requiring any external files or API calls.
+
+**Available Noise Types:**
+- `white` - White noise (equal energy at all frequencies)
+- `pink` - Pink noise (equal energy per octave, more natural than white)
+- `brown` - Brown/Brownian noise (deeper, more bass-heavy)
+- `fan` - Fan noise (low hum with air movement)
+- `rain` - Rain sounds (rainfall with droplet impacts)
+- `ocean` - Ocean waves (rhythmic wave patterns)
+- `wind` - Wind sounds (gusting wind with variation)
+
+**Parameters:**
+- `entity_id` (required): Target media player(s)
+- `noise_type` (required): Type of noise to generate
+- `volume` (optional): Volume level from 0.0 to 1.0 (default: 0.5)
+- `intensity` (optional): Sound intensity/amplitude from 0.0 to 1.0 (default: 0.5)
+- `duration` (optional): Duration in seconds, 10-3600 (default: 60)
+
+**Example:**
+```yaml
+service: ambient_sounds.play_noise
+data:
+  entity_id: media_player.bedroom_speaker
+  noise_type: pink
+  volume: 0.3
+  intensity: 0.6
+  duration: 300  # 5 minutes
+```
+
 ### Automation Examples
+
+**Play generated white noise at bedtime:**
+```yaml
+automation:
+  - alias: "Bedtime White Noise"
+    trigger:
+      - platform: time
+        at: "22:00:00"
+    action:
+      - service: ambient_sounds.play_noise
+        data:
+          entity_id: media_player.bedroom_speaker
+          noise_type: white
+          volume: 0.3
+          intensity: 0.5
+          duration: 3600  # 1 hour
+```
 
 **Play rain sounds at bedtime:**
 ```yaml
@@ -190,6 +266,13 @@ automation:
 
 ## How It Works
 
+**Generated Noise:**
+1. **Generate**: The integration uses Python with NumPy to synthesize realistic ambient sounds in real-time
+2. **Save**: Generated audio is temporarily saved as WAV files on your Home Assistant system
+3. **Play**: Audio files are played on any compatible media player in your network
+4. **No Internet**: Works completely offline, no API calls or external dependencies
+
+**Freesound Library:**
 1. **Search**: The integration uses Freesound's API to search their audio library
 2. **Stream**: Audio files are streamed directly from Freesound's servers
 3. **Favorites**: Your saved favorites are stored locally in Home Assistant using the Store helper
@@ -223,10 +306,13 @@ Freesound's free tier provides:
 - 5,000 API requests per month
 - Each search counts as one request
 - No limits on playing saved favorites
+- Generated noise (play_noise service) doesn't count against API limits
 
 ## Credits
 
 This integration uses audio from [Freesound](https://freesound.org/), which provides high-quality royalty-free audio content. All audio is subject to Freesound's license terms.
+
+Generated noise is created using Python and NumPy for real-time synthesis.
 
 ## Support
 
@@ -236,110 +322,3 @@ For issues, feature requests, or questions:
 ## License
 
 See LICENSE file for details.
-  - `forest` - Forest ambience
-  - `wind` - Wind sounds
-  - `white_noise` - White noise
-  - `brown_noise` - Brown noise
-  - `fire` - Fire crackling
-  - `thunder` - Thunder sounds
-  - `river` - Flowing river/stream
-  - `cafe` - Cafe restaurant ambience
-- `volume` (optional): Volume level from 0.0 to 1.0 (default: 0.5)
-- `intensity` (optional): Sound intensity from 0 to 100 (default: 50) - for future use
-
-**Example:**
-```yaml
-service: ambient_sound_synthesizer.play_sound
-data:
-  entity_id: media_player.living_room_speaker
-  sound_type: rain
-  volume: 0.7
-  intensity: 50
-```
-
-#### `ambient_sound_synthesizer.stop_sound`
-
-Stop ambient sound playback on one or more media players.
-
-**Parameters:**
-- `entity_id` (required): Target media player(s)
-
-**Example:**
-```yaml
-service: ambient_sound_synthesizer.stop_sound
-data:
-  entity_id: media_player.living_room_speaker
-```
-
-### Using in Automations
-
-You can use these services in automations to play ambient sounds based on triggers:
-
-```yaml
-automation:
-  - alias: "Play rain sounds at bedtime"
-    trigger:
-      - platform: time
-        at: "22:00:00"
-    action:
-      - service: ambient_sound_synthesizer.play_sound
-        data:
-          entity_id: media_player.bedroom_speaker
-          sound_type: rain
-          volume: 0.3
-          intensity: 60
-          
-  - alias: "Play cafe sounds during work hours"
-    trigger:
-      - platform: time
-        at: "09:00:00"
-    condition:
-      - condition: state
-        entity_id: binary_sensor.workday
-        state: "on"
-    action:
-      - service: ambient_sound_synthesizer.play_sound
-        data:
-          entity_id: media_player.office_speaker
-          sound_type: cafe
-          volume: 0.4
-          intensity: 50
-```
-
-## How It Works
-
-The integration streams ambient sound audio files directly to your media players using publicly available audio sources. The sounds are high-quality looping audio files that play continuously.
-
-## Configuration
-
-You can configure default settings through the integration's options in the UI, but these can be overridden when calling the services.
-
-## Features
-
-- Stream ambient sounds to any media player
-- 10 different sound types
-- Adjustable volume controls
-- No audio files required - everything streams on-demand
-- Media Browser integration for easy UI-based control
-- Service-based design for automation
-- Works with any Home Assistant media player that supports HTTP streaming
-- Use in automations and scripts
-- Control multiple media players simultaneously
-
-## Audio Sources
-
-This integration uses high-quality ambient sound audio from Freesound's royalty-free sound library. All audio files are properly licensed for use.
-
-## Requirements
-
-- Active internet connection to stream from myNoise.net
-- Media players that support streaming from HTTP URLs
-- Home Assistant 2024.1.0 or newer
-
-## Development
-
-This is a Home Assistant custom integration built using the standard config flow pattern and service architecture.
-
-## License
-
-See LICENSE file for details. 
