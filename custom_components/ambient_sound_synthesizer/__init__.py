@@ -20,6 +20,7 @@ from .const import (
     STORAGE_VERSION,
 )
 from .freesound_client import FreesoundClient
+from .noise_generator import NoiseGenerator
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -30,6 +31,7 @@ SERVICE_STOP_SOUND = "stop_sound"
 SERVICE_ADD_FAVORITE = "add_favorite"
 SERVICE_REMOVE_FAVORITE = "remove_favorite"
 SERVICE_SEARCH = "search"
+SERVICE_PLAY_NOISE = "play_noise"
 
 PLAY_FAVORITE_SCHEMA = vol.Schema(
     {
@@ -67,6 +69,24 @@ SEARCH_SCHEMA = vol.Schema(
     {
         vol.Required("query"): str,
         vol.Optional("sort_by"): vol.In(["name", "duration"]),
+    }
+)
+
+PLAY_NOISE_SCHEMA = vol.Schema(
+    {
+        vol.Required("entity_id"): cv.entity_ids,
+        vol.Required("noise_type"): vol.In([
+            "white", "pink", "brown", "fan", "rain", "ocean", "wind"
+        ]),
+        vol.Optional("volume", default=0.5): vol.All(
+            vol.Coerce(float), vol.Range(min=0.0, max=1.0)
+        ),
+        vol.Optional("intensity", default=0.5): vol.All(
+            vol.Coerce(float), vol.Range(min=0.0, max=1.0)
+        ),
+        vol.Optional("duration", default=60): vol.All(
+            vol.Coerce(int), vol.Range(min=10, max=3600)
+        ),
     }
 )
 
@@ -249,6 +269,74 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             if len(results) > 10:
                 _LOGGER.info("... and %d more results", len(results) - 10)
         
+        async def handle_play_noise(call: ServiceCall) -> None:
+            """Handle the play_noise service call."""
+            import base64
+            import tempfile
+            import os
+            from pathlib import Path
+            
+            entity_ids = call.data["entity_id"]
+            noise_type = call.data["noise_type"]
+            volume = call.data.get("volume", 0.5)
+            intensity = call.data.get("intensity", 0.5)
+            duration = call.data.get("duration", 60)
+            
+            _LOGGER.info(
+                "Generating %s noise (duration: %ds, intensity: %.2f) for %s",
+                noise_type, duration, intensity, entity_ids
+            )
+            
+            try:
+                # Create noise generator
+                generator = NoiseGenerator(duration=duration)
+                
+                # Generate the noise
+                wav_data = generator.generate_noise(noise_type, intensity)
+                
+                # Save to temporary file
+                temp_dir = Path(tempfile.gettempdir()) / "ambient_sounds"
+                temp_dir.mkdir(exist_ok=True)
+                
+                temp_file = temp_dir / f"{noise_type}_noise.wav"
+                with open(temp_file, "wb") as f:
+                    f.write(wav_data)
+                
+                _LOGGER.info("Generated noise saved to %s", temp_file)
+                
+                # Play the audio on each media player
+                for entity_id in entity_ids:
+                    try:
+                        # Use file:// URL for local playback
+                        media_url = f"file://{temp_file}"
+                        
+                        await hass.services.async_call(
+                            "media_player",
+                            "play_media",
+                            {
+                                "entity_id": entity_id,
+                                "media_content_id": str(temp_file),
+                                "media_content_type": "music",
+                            },
+                            blocking=True,
+                        )
+                        
+                        # Set volume if specified
+                        await hass.services.async_call(
+                            "media_player",
+                            "volume_set",
+                            {
+                                "entity_id": entity_id,
+                                "volume_level": volume,
+                            },
+                            blocking=True,
+                        )
+                    except Exception as err:
+                        _LOGGER.error("Failed to play noise on %s: %s", entity_id, err)
+                
+            except Exception as err:
+                _LOGGER.error("Failed to generate %s noise: %s", noise_type, err)
+        
         # Register services
         hass.services.async_register(
             DOMAIN,
@@ -284,6 +372,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             handle_search,
             schema=SEARCH_SCHEMA,
         )
+        
+        hass.services.async_register(
+            DOMAIN,
+            SERVICE_PLAY_NOISE,
+            handle_play_noise,
+            schema=PLAY_NOISE_SCHEMA,
+        )
     
     _LOGGER.info("Setting up Ambient Sounds integration")
     
@@ -301,6 +396,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         hass.services.async_remove(DOMAIN, SERVICE_ADD_FAVORITE)
         hass.services.async_remove(DOMAIN, SERVICE_REMOVE_FAVORITE)
         hass.services.async_remove(DOMAIN, SERVICE_SEARCH)
+        hass.services.async_remove(DOMAIN, SERVICE_PLAY_NOISE)
     
     return True
 
