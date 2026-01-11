@@ -60,7 +60,29 @@ This integration offers two ways to play ambient sounds:
 
 ### Generated Noise (No Internet Required)
 
-The simplest way to play ambient noise is using the built-in noise generator. Use the `ambient_sounds.play_noise` service in automations or scripts:
+You can access the noise generator in two ways:
+
+#### Option 1: Media Browser (GUI - No YAML needed)
+
+The easiest way to play noise through the Home Assistant UI:
+
+1. Open any media player in Home Assistant
+2. Click **Browse Media**
+3. Navigate to **Ambient Sounds** → **🎛️ Noise Generator**
+4. Select a noise type:
+   - ⚪ **White Noise** - Equal energy at all frequencies - great for sleep & focus
+   - 🎀 **Pink Noise** - Equal energy per octave - more natural than white noise
+   - 🟤 **Brown Noise** - Deeper, bass-heavy sound - very soothing
+   - 🌀 **Fan Noise** - Electric fan simulation with motor hum
+   - 🌧️ **Rain** - Realistic rainfall with droplet sounds
+   - 🌊 **Ocean Waves** - Rhythmic wave patterns and surf
+   - 💨 **Wind** - Gusting wind with natural variation
+5. Choose duration (1 minute to 3 hours)
+6. Click to play on your media player!
+
+#### Option 2: Service Call (for automations and scripts)
+
+Use the `ambient_sounds.play_noise` service in automations or scripts:
 
 ```yaml
 service: ambient_sounds.play_noise
@@ -71,25 +93,16 @@ data:
   duration: 3600  # seconds
 ```
 
-**Available noise types:**
-- **white** - White noise for sleep and focus
-- **pink** - Pink noise (more natural sounding than white)
-- **brown** - Brown noise (deeper, bass-heavy)
-- **fan** - Fan noise simulation
-- **rain** - Rainfall sounds
-- **ocean** - Ocean wave sounds
-- **wind** - Wind gusts and ambience
+### Freesound Library (Browse & Search)
 
-### Media Browser
-
-The primary way to use Ambient Sounds:
+Search and stream thousands of ambient sounds:
 
 1. Open any media player in Home Assistant
 2. Click **Browse Media**
-3. Navigate to **Ambient Sounds**
+3. Navigate to **Ambient Sounds** → **🔍 Search Freesound**
 4. Choose from:
-   - **⭐ Favorites**: Your saved sounds for quick access
-   - **🔍 Search Freesound**: Browse and search Freesound's audio catalog
+   - **✏️ Custom Text Search**: See example searches or use the search service for custom queries
+   - **Suggested categories** (rain, ocean, forest, wind, thunder, fire, birds, river, waterfall, cafe, city, nature, ambient, meditation, relaxing)
 
 #### Searching for Sounds
 
