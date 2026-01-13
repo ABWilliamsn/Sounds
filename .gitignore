@@ -35,3 +35,15 @@ env/
 # OS
 .DS_Store
 Thumbs.db
+
+# Environment and secrets
+.env
+.env.local
+.env.*.local
+secrets.yaml
+secrets.yml
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa*
